@@ -25,8 +25,8 @@ function Root() {
   return <App needRefresh={needRefresh} onRefresh={onRefresh} />;
 }
 
-// /pay is the public page a parent opens from a reminder's payment link. It runs
+// /p is the public page a parent opens from a reminder's payment link. It runs
 // without the app, its database or a service worker.
-const isPayPage = window.location.pathname.replace(/\/+$/, '') === '/pay';
+const isPayPage = ['/p', '/pay'].includes(window.location.pathname.replace(/\/+$/, '')); // /pay = links sent by the first release
 
 render(isPayPage ? <PayPage /> : <Root />, document.getElementById('app'));

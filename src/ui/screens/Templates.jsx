@@ -10,7 +10,7 @@ const SAMPLE_DATA = {
   parent_name: 'Rajesh', student_name: 'Aarav Sharma', class: 'IV', school: 'DPS',
   pickup_point: 'Alpha-1 Main Gate', amount: '1,600', period: 'Aug 2026', due_date: '05 Aug 2026',
   days_overdue: '12', operator_name: 'Ramesh Kumar', operator_phone: '9812345678', upi_id: 'ramesh@upi',
-  pay_link: 'https://your-site/pay?pa=ramesh%40upi&am=1600',
+  pay_link: 'https://your-site/p?u=ramesh%40upi&a=1600',
   qr_note: 'QR code is message ke saath attached hai.',
   receipt_no: 'RCP-2026-0143', mode: 'UPI', paid_on: '18 Aug 2026'
 };

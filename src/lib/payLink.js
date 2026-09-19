@@ -18,30 +18,35 @@ function query(params) {
     .join('&');
 }
 
-/** The https link put in the WhatsApp message. Empty string when it cannot be built. */
-export function buildPayLink({ baseUrl, upiId, name, amount, note }) {
+/**
+ * The https link put in the WhatsApp message, kept as short as possible because it sits
+ * inside a chat message: /p?u=<upi id>&a=<amount>. The UPI id keeps its "@" encoded (%40)
+ * so no chat app mistakes it for an email address and cuts the link. The driver's name is
+ * left out (the message already ends with it). Empty string when it cannot be built.
+ */
+export function buildPayLink({ baseUrl, upiId, amount }) {
   if (!baseUrl || !isValidUpiId(upiId)) return '';
   const am = Math.round(Number(amount) || 0);
-  return `${baseUrl.replace(/\/+$/, '')}/pay?${query({
-    pa: upiId.trim(),
-    pn: (name || '').trim().slice(0, 40),
-    am: am > 0 && am <= MAX_AMOUNT ? String(am) : '',
-    tn: (note || '').trim().slice(0, 50)
-  })}`;
+  const q = query({ u: upiId.trim(), a: am > 0 && am <= MAX_AMOUNT ? String(am) : '' });
+  return `${baseUrl.replace(/\/+$/, '')}/p?${q}`;
 }
 
-/** Reads and validates the link parameters on the /pay page. */
+/**
+ * Reads and validates the link parameters on the /p page. Also understands the
+ * longer first-release format (/pay?pa=&pn=&am=&tn=) so links already sent keep working.
+ */
 export function parsePayParams(search) {
   const q = new URLSearchParams(search);
-  const upiId = (q.get('pa') || '').trim();
+  const get = (...keys) => keys.map((k) => q.get(k)).find((v) => v) || '';
+  const upiId = get('u', 'pa').trim();
   if (!isValidUpiId(upiId)) return { ok: false, error: 'invalid' };
-  const am = Number(q.get('am'));
+  const am = Number(get('a', 'am'));
   return {
     ok: true,
     upiId,
-    name: (q.get('pn') || '').trim().slice(0, 40),
+    name: get('n', 'pn').trim().slice(0, 40),
     amount: Number.isFinite(am) && am > 0 && am <= MAX_AMOUNT ? am : 0,
-    note: (q.get('tn') || '').trim().slice(0, 50)
+    note: get('tn').trim().slice(0, 50)
   };
 }
 

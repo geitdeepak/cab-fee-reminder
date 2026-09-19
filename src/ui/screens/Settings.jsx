@@ -91,7 +91,7 @@ export function Settings() {
                   style="align-self:flex-start;text-decoration:none"
                   target="_blank"
                   rel="noopener"
-                  href={buildPayLink({ baseUrl: window.location.origin, upiId: upi, name: operator?.business_name || name, amount: 1, note: 'Test payment' })}
+                  href={buildPayLink({ baseUrl: window.location.origin, upiId: upi, amount: 1 })}
                 >
                   {t('testPayLink')}
                 </a>

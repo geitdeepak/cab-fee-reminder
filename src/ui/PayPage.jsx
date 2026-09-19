@@ -16,7 +16,7 @@ export function PayPage() {
   const [copied, setCopied] = useState('');
 
   // Same payload a normal UPI QR carries, so PhonePe/GPay/Paytm can read it.
-  const qr = useMemo(() => (details.ok ? qrPath(upiDeepLink('any', details)) : null), [window.location.search]);
+  const qr = useMemo(() => (details.ok ? qrPath(upiDeepLink('any', { ...details, note: details.note || 'Cab fee' })) : null), [window.location.search]);
 
   if (!details.ok) {
     return (

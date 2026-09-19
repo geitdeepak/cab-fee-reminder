@@ -124,13 +124,11 @@ export function makeReminderRow({ invoice, student, pickup, recipient, stage, to
       operator_name: operator.name || '',
       operator_phone: operator.phone || '',
       upi_id: operator.upi_id || '',
-      // Tappable link to this site's /pay page with the amount pre-filled; '' when no valid UPI id is set.
+      // Short link to this site's /p page with the amount owed; '' when no valid UPI id is set.
       pay_link: buildPayLink({
         baseUrl: payBaseUrl,
         upiId: operator.upi_id,
-        name: operator.business_name || operator.name,
-        amount: balance,
-        note: `Cab fee ${student.name}`
+        amount: balance
       })
     }
   };

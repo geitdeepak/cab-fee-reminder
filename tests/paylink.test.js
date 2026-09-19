@@ -16,11 +16,16 @@ describe('UPI id check', () => {
 describe('pay link', () => {
   const args = { baseUrl: 'https://cabfee.example.dev', upiId: 'ramesh@upi', name: 'Ramesh Cab & Co', amount: 1600, note: 'Cab fee Aarav Sharma' };
 
-  it('carries payee and amount, and round-trips through the /pay page parser', () => {
+  it('is short, carries only the UPI id and amount, and round-trips through the /p page parser', () => {
     const link = buildPayLink(args);
-    expect(link.startsWith('https://cabfee.example.dev/pay?')).toBe(true);
-    const parsed = parsePayParams(new URL(link).search);
-    expect(parsed).toMatchObject({ ok: true, upiId: 'ramesh@upi', name: 'Ramesh Cab & Co', amount: 1600, note: 'Cab fee Aarav Sharma' });
+    expect(link).toBe('https://cabfee.example.dev/p?u=ramesh%40upi&a=1600');
+    expect(link.length - args.baseUrl.length).toBeLessThan(30); // everything after the host
+    expect(parsePayParams(new URL(link).search)).toMatchObject({ ok: true, upiId: 'ramesh@upi', amount: 1600 });
+  });
+
+  it('still understands the longer links sent by the first release (/pay?pa=&pn=&am=&tn=)', () => {
+    const old = '?pa=ramesh%40upi&pn=Ramesh%20Kumar&am=1600&tn=Cab%20fee%20Aarav';
+    expect(parsePayParams(old)).toMatchObject({ ok: true, upiId: 'ramesh@upi', name: 'Ramesh Kumar', amount: 1600, note: 'Cab fee Aarav' });
   });
 
   it('builds nothing without a valid UPI id or a base URL', () => {
@@ -59,9 +64,9 @@ describe('the link inside a reminder message', () => {
 
   it('pre-fills the amount still owed and puts a tappable link in the text', () => {
     const r = row({ name: 'Ramesh', phone: '9812345678', upi_id: 'ramesh@upi' });
-    expect(new URL(r.data_map.pay_link).searchParams.get('am')).toBe('1000'); // 1600 - 600 already paid
+    expect(new URL(r.data_map.pay_link).searchParams.get('a')).toBe('1000'); // 1600 - 600 already paid
     const text = composeMessage(body, r.data_map);
-    expect(text).toContain('Payment link: https://cabfee.example.dev/pay?pa=ramesh%40upi');
+    expect(text).toContain('Payment link: https://cabfee.example.dev/p?u=ramesh%40upi&a=1000');
     expect(text).toContain('UPI ID: ramesh@upi');
     expect(text).toContain('Mobile number: 9812345678');
   });
