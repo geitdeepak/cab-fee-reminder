@@ -12,15 +12,23 @@ function mount(url) {
 }
 
 describe('/pay page', () => {
-  it('shows payee, exact amount and working deep links for a good link', () => {
+  it('leads with the UPI id, the amount, the steps and a QR — not with a payment button', () => {
     const el = mount('https://cabfee.dev/pay?pa=ramesh%40upi&pn=Ramesh%20Kumar&am=1600&tn=Cab%20fee%20Aarav');
     expect(el.textContent).toContain('Ramesh Kumar');
     expect(el.textContent).toContain('1,600');
     expect(el.textContent).toContain('ramesh@upi'); // always visible so the parent can check it
-    const hrefs = [...el.querySelectorAll('a')].map((a) => a.getAttribute('href'));
-    expect(hrefs[0]).toBe('upi://pay?pa=ramesh%40upi&pn=Ramesh%20Kumar&am=1600.00&cu=INR&tn=Cab%20fee%20Aarav');
-    expect(hrefs.some((h) => h.startsWith('tez://'))).toBe(true);
-    expect(hrefs.some((h) => h.startsWith('phonepe://'))).toBe(true);
+    expect(el.textContent).toContain('UPI ID copy kijiye');
+    expect(el.textContent).toContain('Pay to UPI ID');
+    const svg = el.querySelector('svg[aria-label="UPI payment QR code"]');
+    expect(svg).not.toBeNull();
+    expect(svg.querySelector('path').getAttribute('d').length).toBeGreaterThan(200); // a real QR, not an empty box
+  });
+
+  it('has no "open my UPI app" buttons — PhonePe and Google Pay both decline payments started from a link', () => {
+    const el = mount('https://cabfee.dev/pay?pa=ramesh%40upi&pn=Ramesh%20Kumar&am=1600&tn=Cab%20fee%20Aarav');
+    expect(el.querySelectorAll('a').length).toBe(0);
+    expect(el.querySelector('details')).toBeNull();
+    expect(el.innerHTML).not.toMatch(/upi:\/\/|tez:\/\/|phonepe:\/\//);
   });
 
   it('refuses a link with a missing or malformed UPI id and offers no pay buttons', () => {

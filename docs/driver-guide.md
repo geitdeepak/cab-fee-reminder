@@ -37,7 +37,7 @@
 किसी बिल का रिमाइंडर अभी भेजना हो तो "Paisa" → बिल खोलिए → **"Reminder abhi bhejiye"**।
 
 ## 6. अपना UPI ID (एक बार) — पेमेंट लिंक के लिए
-"Aur" → "Setting" → "Payment ki detail" में अपना **UPI ID** लिखिए (जैसे naam@bank)। इसके बाद हर रिमाइंडर में एक **"Payment link"** अपने-आप जुड़ जाएगा। माता-पिता उस लिंक को दबाएँगे तो उनके फ़ोन में GPay / PhonePe / Paytm खुलेगा और **रकम पहले से भरी होगी** — वे सिर्फ़ पेमेंट पक्का करेंगे।
+"Aur" → "Setting" → "Payment ki detail" में अपना **UPI ID** लिखिए (जैसे naam@bank)। इसके बाद हर रिमाइंडर में एक **"Payment link"** अपने-आप जुड़ जाएगा। माता-पिता उस लिंक को दबाएँगे तो एक पेज खुलेगा जिसमें **रकम, आपका UPI ID (copy बटन के साथ) और QR** दिखेगा; वे UPI ID copy करके अपने PhonePe / GPay / Paytm से पे कर सकते हैं। (कई ऐप लिंक से सीधे पेमेंट रोक देती हैं, इसलिए हमने copy और QR का तरीका रखा है।)
 - "Payment link check kijiye (₹1)" दबाकर देख लीजिए कि माता-पिता को क्या दिखेगा।
 - (ज़रूरी नहीं) चाहें तो अपने QR की फोटो भी डाल सकते हैं और "Har reminder ke saath QR bhejiye" चालू कर सकते हैं। पर तब WhatsApp की "share" लिस्ट खुलती है और parent का चैट खुद चुनना पड़ता है, इसलिए यह धीमा है।
 
@@ -97,7 +97,7 @@ Reminders appear only when their time comes: 3 days before the due date, on the 
 To remind about one bill right now: Money → open the bill → **"Send reminder now"**.
 
 ## 6. Your UPI ID (once) — for the payment link
-More → Settings → Payment details: enter your **UPI ID** (like name@bank). After that every reminder automatically includes a **"Payment link"**. When the parent taps it, GPay / PhonePe / Paytm opens with **the amount already filled in** — they only confirm the payment.
+More → Settings → Payment details: enter your **UPI ID** (like name@bank). After that every reminder automatically includes a **"Payment link"**. When the parent taps it, a page opens showing **the amount, your UPI ID (with a copy button) and a QR**; they copy the UPI ID and pay from their own PhonePe / GPay / Paytm. (Many apps block payments started straight from a link, which is why the copy and QR route is the main one.)
 - Tap "Check the payment link (₹1)" to see exactly what a parent will see.
 - (Optional) You can also add your QR photo and turn on "Send the QR with every reminder". But then WhatsApp opens its "share" list and you must pick the parent's chat yourself, so it is slower.
 

@@ -72,3 +72,15 @@ describe('the link inside a reminder message', () => {
     expect(text).not.toMatch(/\n{3,}/);
   });
 });
+
+import { qrPath } from '../src/lib/qr.js';
+
+describe('QR drawing', () => {
+  it('draws a square grid with a quiet zone, and different text gives a different code', () => {
+    const a = qrPath('upi://pay?pa=ramesh%40upi&am=1600.00&cu=INR');
+    const b = qrPath('upi://pay?pa=someone%40upi&am=900.00&cu=INR');
+    expect(a.size).toBeGreaterThan(21);
+    expect(a.path.startsWith('M3 3') || a.path.includes('M3 3')).toBe(true); // finder pattern sits after the 3-module margin
+    expect(a.path).not.toBe(b.path);
+  });
+});

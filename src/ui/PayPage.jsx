@@ -1,13 +1,22 @@
-import { useState } from 'preact/hooks';
+import { useState, useMemo } from 'preact/hooks';
 import { parsePayParams, upiDeepLink } from '../lib/payLink.js';
+import { qrPath } from '../lib/qr.js';
 
 // The page a parent lands on from the "Payment link" in a reminder. It is public,
 // has no login and touches no database — everything comes from the link itself.
-// Because anyone could craft such a link, the payee name and UPI id are always
-// shown so the parent can check them before paying.
+//
+// UPI apps decline payments started from a web link to a personal UPI id
+// ("declined for security reasons" — seen on both PhonePe and Google Pay in real
+// testing), so there is deliberately no "open my UPI app" button. The parent copies
+// the UPI id and pays it from inside their own app, or uses the QR.
+//
+// Anyone could craft such a link, so the payee name and UPI id are always shown.
 export function PayPage() {
   const details = parsePayParams(window.location.search);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState('');
+
+  // Same payload a normal UPI QR carries, so PhonePe/GPay/Paytm can read it.
+  const qr = useMemo(() => (details.ok ? qrPath(upiDeepLink('any', details)) : null), [window.location.search]);
 
   if (!details.ok) {
     return (
@@ -20,15 +29,15 @@ export function PayPage() {
     );
   }
 
-  const link = (kind) => upiDeepLink(kind, details);
+  const amountText = details.amount > 0 ? details.amount.toLocaleString('en-IN') : '';
 
-  async function copyId() {
+  async function copy(what, value) {
     try {
-      await navigator.clipboard.writeText(details.upiId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(value);
+      setCopied(what);
+      setTimeout(() => setCopied(''), 2200);
     } catch {
-      // Clipboard blocked: the id is on screen to copy by hand.
+      // Clipboard blocked: the value is on screen to copy by hand.
     }
   }
 
@@ -39,34 +48,60 @@ export function PayPage() {
         <div style="font-weight:800;font-size:22px;margin-top:8px;line-height:1.2">
           {details.name ? `${details.name} ko payment` : 'Payment'}
         </div>
-        {details.amount > 0 && (
-          <div style="font-weight:800;font-size:44px;margin-top:10px;line-height:1">
-            {'₹'}{details.amount.toLocaleString('en-IN')}
-          </div>
+        {amountText && (
+          <div style="font-weight:800;font-size:44px;margin-top:10px;line-height:1">{'₹'}{amountText}</div>
         )}
         {details.note && <div style="margin-top:8px;font-size:13px;color:var(--color-neutral-300)">{details.note}</div>}
       </div>
 
-      <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
-        <a class="btn btn-accent btn-block" style="justify-content:center;text-decoration:none;font-size:16px" href={link('any')}>
-          UPI app se pay kijiye
-        </a>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-          <a class="btn btn-secondary" style="justify-content:center;text-decoration:none;padding:12px 6px" href={link('gpay')}>Google Pay</a>
-          <a class="btn btn-secondary" style="justify-content:center;text-decoration:none;padding:12px 6px" href={link('phonepe')}>PhonePe</a>
-          <a class="btn btn-secondary" style="justify-content:center;text-decoration:none;padding:12px 6px" href={link('paytm')}>Paytm</a>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div class="card card-tight" style="display:flex;flex-direction:column;gap:8px">
+          <div class="stat-label">UPI ID</div>
+          <div style="font-weight:800;font-size:19px;word-break:break-all">{details.upiId}</div>
+          <button class="btn btn-accent" style="align-self:flex-start;font-size:15px" onClick={() => copy('id', details.upiId)}>
+            {copied === 'id' ? 'Copy ho gaya ✓' : 'UPI ID copy kijiye'}
+          </button>
         </div>
 
-        <div class="card card-tight" style="display:flex;flex-direction:column;gap:6px">
-          <div class="stat-label">UPI ID</div>
-          <div style="font-weight:800;font-size:17px;word-break:break-all">{details.upiId}</div>
-          <button class="btn btn-secondary" style="align-self:flex-start" onClick={copyId}>{copied ? 'Copy ho gaya ✓' : 'UPI ID copy kijiye'}</button>
+        <div>
+          <div style="font-weight:800;font-size:15px">Kaise pay karein / How to pay</div>
+          <ol style="margin:8px 0 0;padding-left:20px;line-height:1.7;font-size:14px">
+            <li>PhonePe / Google Pay / Paytm kholiye</li>
+            <li>"Pay to UPI ID" (ya "To UPI ID") chuniye aur copy kiya hua ID paste kijiye</li>
+            {amountText ? <li>Amount <b>{'₹'}{amountText}</b> daaliye aur pay kijiye</li> : <li>Amount daaliye aur pay kijiye</li>}
+            <li>Payment ke baad screenshot driver ko bhej dijiye</li>
+          </ol>
+          <div style="margin-top:6px;font-size:12.5px;color:var(--color-neutral-700);line-height:1.55">
+            Open your UPI app, choose "Pay to UPI ID", paste the ID above, enter the amount, and send the driver a screenshot.
+          </div>
         </div>
+
+        {qr && (
+          <div class="card card-tight" style="display:flex;flex-direction:column;align-items:center;gap:8px">
+            <div class="stat-label" style="align-self:flex-start">Ya QR se pay kijiye / Or pay by QR</div>
+            <svg
+              viewBox={`0 0 ${qr.size} ${qr.size}`}
+              width="220"
+              height="220"
+              role="img"
+              aria-label="UPI payment QR code"
+              shape-rendering="crispEdges"
+              style="background:#fff;border:2px solid var(--color-text)"
+            >
+              <path d={qr.path} fill="#000" />
+            </svg>
+            <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-align:center">
+              Is QR ka screenshot lekar app mein "Scan / Upload QR" se chuniye, ya kisi doosre phone se scan kijiye.
+              <br />
+              Take a screenshot and pick it with your UPI app's "Scan / Upload QR", or scan it from another phone.
+            </div>
+          </div>
+        )}
 
         <div style="font-size:12.5px;line-height:1.6;color:var(--color-neutral-800)">
-          Pay karne se pehle naam aur UPI ID ek baar check kar lijiye. Payment ke baad driver ko screenshot bhej dijiye.
+          Pay karne se pehle naam aur UPI ID ek baar check kar lijiye.
           <br />
-          Check the name and UPI ID before paying, and send the driver a screenshot afterwards. If no app opens, open this link on your phone or pay to the UPI ID above.
+          Check the name and UPI ID before paying.
         </div>
       </div>
     </div>

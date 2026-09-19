@@ -61,11 +61,13 @@ OD-10 Hinglish default with English toggle.
 - "Send reminder now" on any unpaid bill sends today's message without waiting for the schedule.
 - Message wording lives in `src/db/seed.js`; templates the driver never edited are upgraded
   automatically. A line containing `{upi_id}` is dropped when no UPI id is set.
-- **Payment link:** with a UPI id saved in Settings, every reminder carries a tappable link to this
-  site's public `/pay` page (`src/ui/PayPage.jsx`) with the driver's UPI id and the exact amount owed in
-  the URL. The parent's phone opens GPay/PhonePe/Paytm pre-filled. No server, nothing stored, works for
-  every driver from the one deployment. The page always shows the payee name and UPI id so a parent can
-  check them. Not yet tested on real phones (UPI deep links vary by phone and app).
+- **Payment link:** with a UPI id saved in Settings, every reminder carries a link to this site's public
+  `/pay` page (`src/ui/PayPage.jsx`). The link holds the driver's UPI id and the exact amount owed; nothing
+  is stored and it works for every driver from the one deployment. The page shows the amount, the UPI id
+  with a copy button, step-by-step instructions and a UPI QR drawn in the browser (`src/lib/qr.js`).
+  There is deliberately no "open my UPI app" button: tested on a real phone, PhonePe and Google Pay both
+  open pre-filled and then decline the payment "for security reasons" (UPI apps block payments started
+  from a web link to a personal UPI id). Not yet tested: paying by scanning the on-page QR.
 - Payment QR (optional, off by default): upload once in Settings and switch on "send the QR with every
   reminder". WhatsApp cannot pre-fill a recipient when an image is attached, so the driver picks the
   chat from the share sheet, which is slower than the pre-filled chat.

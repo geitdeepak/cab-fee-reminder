@@ -15,7 +15,8 @@
   "dependencies": {
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
-    "preact": "^10.24.0"
+    "preact": "^10.24.0",
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.0",
