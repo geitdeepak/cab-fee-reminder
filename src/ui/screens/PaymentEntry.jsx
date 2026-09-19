@@ -90,7 +90,7 @@ export function PaymentEntry() {
   if (done) {
     return (
       <div style="min-height:100vh;display:flex;flex-direction:column">
-        <TopBar title={t('payment')} eyebrow="S-10" />
+        <TopBar title={t('payment')} />
         <div class="main-scroll scr">
           <div class="screen-pad">
             <div style="border:2px solid var(--color-text);background:var(--color-success);color:#fff;padding:14px">
@@ -117,7 +117,7 @@ export function PaymentEntry() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('payment')} eyebrow="S-10" />
+      <TopBar title={t('payment')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           <div class="card card-tight">

@@ -30,7 +30,7 @@ export function Reports() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('reports')} eyebrow="S-13" />
+      <TopBar title={t('reports')} />
       <div class="main-scroll scr">
         <div style="padding:14px;background:var(--color-text);color:#fff">
           <div style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--color-accent-200)">{report.monthPrefix}</div>

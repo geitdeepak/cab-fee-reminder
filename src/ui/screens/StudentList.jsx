@@ -58,7 +58,7 @@ export function StudentList() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('students')} eyebrow="S-04" />
+      <TopBar title={t('students')} />
       <div class="main-scroll scr">
         <div style="padding:12px 14px;border-bottom:2px solid var(--color-text);background:var(--color-neutral-100);display:flex;flex-direction:column;gap:9px">
           <input class="input" value={search} onInput={(e) => setSearch(e.currentTarget.value)} placeholder={t('searchPlaceholder')} />

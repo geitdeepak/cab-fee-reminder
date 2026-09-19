@@ -55,7 +55,7 @@ export function Templates() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('templates')} eyebrow="S-11" />
+      <TopBar title={t('templates')} />
       <div class="main-scroll scr">
         <div style="padding:12px 14px 0;display:flex;align-items:center;gap:10px;background:var(--color-neutral-100)">
           <span class="stat-label">{t('messageLanguage')}</span>

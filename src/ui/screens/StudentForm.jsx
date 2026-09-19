@@ -106,7 +106,7 @@ export function StudentForm() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={isEdit ? t('edit') : t('addStudent')} eyebrow="S-06" />
+      <TopBar title={isEdit ? t('edit') : t('addStudent')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           {!isEdit && (

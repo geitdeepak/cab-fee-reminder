@@ -43,7 +43,7 @@ export function StudentDetail() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={student.name} eyebrow="S-05" />
+      <TopBar title={student.name} />
       <div class="main-scroll scr">
         <SafetyCard student={student} />
 

@@ -39,7 +39,7 @@ export function Dashboard() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('dashboard')} eyebrow="S-02" />
+      <TopBar title={t('dashboard')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           {banner !== 'none' && (

@@ -54,7 +54,7 @@ export function Backup() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('backup')} eyebrow="S-12" />
+      <TopBar title={t('backup')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           <div style={`border:2px solid var(--color-text);padding:14px;${cardStyle}`}>

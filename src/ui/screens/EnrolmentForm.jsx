@@ -62,7 +62,7 @@ export function EnrolmentForm() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('enrolment')} eyebrow="S-08" />
+      <TopBar title={t('enrolment')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           <div class="card card-tight">

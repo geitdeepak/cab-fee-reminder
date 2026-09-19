@@ -34,7 +34,7 @@ A plain-language guide in Hindi and English for drivers: [docs/driver-guide.md](
 | `src/db/` | Dexie schema (SRS 5.2 incl. both unique indexes) and first-run seed. |
 | `src/actions/` | Bridges domain logic to Dexie: enrolment, engine, payments, queue, backup, reports. |
 | `src/lib/` | WhatsApp link builder, backup/restore, MPIN hashing, formatting. |
-| `src/ui/` | Screens S-01 to S-14 and shared components. |
+| `src/ui/` | The screens and shared components. |
 | `tests/` | Domain, integration (real Dexie via fake-indexeddb), and app-mount smoke tests. |
 
 ## Decisions taken on SRS Appendix B (open items)

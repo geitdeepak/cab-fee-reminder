@@ -1,7 +1,7 @@
 import { useUi } from '../../state/ui.jsx';
 import { LangToggle } from './LangToggle.jsx';
 
-export function TopBar({ title, eyebrow, right }) {
+export function TopBar({ title, right }) {
   const { state, back, t } = useUi();
   const [hh, mm] = [new Date().getHours(), new Date().getMinutes()];
   const clock = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
@@ -19,7 +19,6 @@ export function TopBar({ title, eyebrow, right }) {
           </button>
         )}
         <div class="topbar-title-wrap">
-          {eyebrow && <div class="topbar-eyebrow">{eyebrow}</div>}
           <div class="topbar-title">{title}</div>
         </div>
         {right}

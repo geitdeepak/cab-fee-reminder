@@ -32,7 +32,7 @@ export function Invoices() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('invoices')} eyebrow="S-09" />
+      <TopBar title={t('invoices')} />
       <div class="main-scroll scr">
         <div style="display:flex;border-bottom:2px solid var(--color-text)">
           {tabs.map((tb) => (

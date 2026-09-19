@@ -48,7 +48,7 @@ export function ReminderQueue() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('queue')} eyebrow="S-03" />
+      <TopBar title={t('queue')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           {queueResult?.quiet && <div class="banner banner-amber">{t('quietHoursNote')}</div>}

@@ -58,7 +58,7 @@ export function Settings() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('settings')} eyebrow="S-14" />
+      <TopBar title={t('settings')} />
       <div class="main-scroll scr">
         <div class="screen-pad">
           <div style="display:flex;flex-direction:column;gap:10px">

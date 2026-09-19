@@ -58,7 +58,7 @@ export function PickupPoints() {
 
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">
-      <TopBar title={t('pickups')} eyebrow="S-07" />
+      <TopBar title={t('pickups')} />
       <div class="main-scroll scr">
         <div style="padding:12px 14px;border-bottom:2px solid var(--color-text);background:var(--color-neutral-100);font-size:12px;color:var(--color-neutral-800)">{t('pickupIntro')}</div>
         {pickups.map((p) => (
