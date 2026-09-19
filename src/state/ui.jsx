@@ -49,6 +49,8 @@ export function UiProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const toastTimer = useRef(null);
   const bgTimer = useRef(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +95,34 @@ export function UiProvider({ children }) {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, [state.locked, lock]);
+
+  // The phone's own back button / swipe. An installed app has no browser history of its own, so
+  // without this the first back press would close the app from any screen. We keep one spare
+  // history entry behind the app; when the phone goes "back" onto it we do the in-app back step
+  // and put the spare entry back. Only from Home (or the lock screen) is the app allowed to close.
+  useEffect(() => {
+    history.replaceState({ cabfee: 'base' }, '');
+    history.pushState({ cabfee: 'guard' }, '');
+    const rearm = () => history.pushState({ cabfee: 'guard' }, '');
+
+    function onPop() {
+      const s = stateRef.current;
+      if (s.dialog) {
+        dispatch({ type: 'DIALOG', dialog: null });
+        rearm();
+      } else if (s.stack.length > 0) {
+        dispatch({ type: 'BACK' });
+        rearm();
+      } else if (!['dash', 'lock', 'setup', 'boot'].includes(s.screen)) {
+        dispatch({ type: 'ROOT', screen: 'dash' });
+        rearm();
+      } else {
+        history.back(); // already at Home: let the phone leave the app
+      }
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   const tr = useCallback((key) => translate(state.lang, key), [state.lang]);
 

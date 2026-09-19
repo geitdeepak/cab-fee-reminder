@@ -13,7 +13,7 @@ export function TopBar({ title, right }) {
         <span>{t('offline')}</span>
       </div>
       <div class="topbar-main">
-        {state.stack.length > 0 && (
+        {(state.stack.length > 0 || state.screen !== 'dash') && (
           <button class="icon-btn" aria-label="Back" onClick={back}>
             {'←'}
           </button>

@@ -83,6 +83,22 @@ describe('App mount smoke test', () => {
     expect(html).toContain('₹0'); // outstanding/collected tiles render ₹0, not "NaN" or a thrown error
     expect(container.querySelectorAll('.nav-btn').length).toBe(5);
 
+    // --- The Students tab has a Back button, and it returns to Home.
+    [...container.querySelectorAll('.nav-btn')].find((b) => b.textContent.includes('Bachche')).click();
+    await waitFor(() => container.querySelector('.topbar-title')?.textContent === 'Bachche');
+    const backButton = container.querySelector('.topbar button[aria-label="Back"]');
+    expect(backButton).not.toBeNull();
+    backButton.click();
+    await waitFor(() => container.querySelector('.topbar-title')?.textContent === 'Aaj ka hisaab');
+    expect(container.querySelector('.topbar button[aria-label="Back"]')).toBeNull(); // Home itself has none
+
+    // --- The phone's own back button / swipe does the same instead of closing the app.
+    const phoneBack = () => window.dispatchEvent(new PopStateEvent('popstate'));
+    [...container.querySelectorAll('.nav-btn')].find((b) => b.textContent.includes('Bachche')).click();
+    await waitFor(() => container.querySelector('.topbar-title')?.textContent === 'Bachche');
+    phoneBack();
+    await waitFor(() => container.querySelector('.topbar-title')?.textContent === 'Aaj ka hisaab');
+
     // --- Viewing the English messages must not silently change what is sent (the bug a
     // driver hit): the Message screen says which language is being sent and lets them change it.
     [...container.querySelectorAll('.nav-btn')].find((b) => b.textContent.includes('Aur')).click(); // glyph + label
@@ -100,5 +116,8 @@ describe('App mount smoke test', () => {
     clickByText(container, '.main-scroll button', 'Reminder English mein bhejiye');
     await waitFor(() => ![...container.querySelectorAll('.main-scroll button')].some((b) => b.textContent === 'Reminder English mein bhejiye'));
     expect((await db.settings.get('message_language')).value).toBe('english');
+
+    phoneBack(); // Message was opened from More, so back lands on More
+    await waitFor(() => container.querySelector('.topbar-title')?.textContent === 'Aur');
   }, 30000);
 });
