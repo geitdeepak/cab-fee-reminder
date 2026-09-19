@@ -1,5 +1,6 @@
 // FR-11 / Section 9.
 import { db } from '../db/index.js';
+import { seedIfEmpty } from '../db/seed.js';
 import {
   exportBackup as libExportBackup,
   parseBackupFile,
@@ -13,7 +14,9 @@ import {
 
 export async function backupNow() {
   const result = await libExportBackup(db);
-  await db.meta.put({ key: 'last_backup_at', value: new Date().toISOString() });
+  if (result.method !== 'cancelled') {
+    await db.meta.put({ key: 'last_backup_at', value: new Date().toISOString() });
+  }
   return result;
 }
 
@@ -45,6 +48,7 @@ export async function prepareRestore(file) {
 export async function confirmRestore(parsed) {
   await savePreRestoreSnapshot(db);
   await restoreFromPayload(db, parsed);
+  await seedIfEmpty(db); // a backup from an older version may lack the English templates
 }
 
 export function getPreRestoreSnapshot() {
@@ -55,6 +59,7 @@ export async function undoRestore() {
   const snap = libGetPreRestoreSnapshot();
   if (!snap) throw new Error('Nothing to undo — the previous state is no longer available.');
   await restoreFromPayload(db, snap.payload);
+  await seedIfEmpty(db);
   clearPreRestoreSnapshot();
 }
 

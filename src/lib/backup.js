@@ -51,10 +51,18 @@ export async function exportBackup(db) {
   const filename = backupFileName();
 
   if (navigator.share && navigator.canShare) {
-    const file = new File([blob], filename, { type: 'application/json' });
-    if (navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], title: 'Cab Fee backup' });
-      return { method: 'share', filename };
+    try {
+      const file = new File([blob], filename, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Cab Fee backup' });
+        return { method: 'share', filename };
+      }
+    } catch (e) {
+      // The driver closed the share sheet: nothing was saved, so do not count it as a backup.
+      if (e && e.name === 'AbortError') return { method: 'cancelled', filename };
+      // Anything else (notably NotAllowedError, shown to users as "Permission denied", which
+      // browsers raise when they refuse a file type or the tap is too old) must not lose the
+      // backup: carry on and save the file to Downloads instead.
     }
   }
   // Fallback: direct download (9.3).
@@ -65,7 +73,8 @@ export async function exportBackup(db) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  // Revoking straight away can cancel the download on some mobile browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
   return { method: 'download', filename };
 }
 

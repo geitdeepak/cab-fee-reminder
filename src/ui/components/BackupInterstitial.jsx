@@ -41,8 +41,9 @@ export function BackupInterstitial() {
   async function onBackup() {
     setBusy(true);
     try {
-      await backupNow();
-      toast('✓');
+      const result = await backupNow();
+      if (result.method === 'download') toast(t('backupSavedDownload'));
+      else if (result.method !== 'cancelled') toast('✓');
     } catch (e) {
       toast(e.message);
     } finally {

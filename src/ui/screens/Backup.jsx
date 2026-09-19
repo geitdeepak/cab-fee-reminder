@@ -15,7 +15,8 @@ export function Backup() {
     setBusy(true);
     try {
       const result = await backupNow();
-      toast(`${result.filename} ✓`);
+      if (result.method === 'download') toast(t('backupSavedDownload'));
+      else if (result.method === 'share') toast(`${result.filename} ✓`);
     } catch (e) {
       toast(e.message);
     } finally {
@@ -68,7 +69,7 @@ export function Backup() {
           <div style="border-top:2px solid var(--color-text);padding-top:14px;display:flex;flex-direction:column;gap:9px">
             <div class="section-title">{t('restore')}</div>
             <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-800)">{t('restoreExplain')}</div>
-            <input ref={fileRef} type="file" accept="application/json" style="display:none" onChange={onFile} />
+            <input ref={fileRef} type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onChange={onFile} />
             <button class="btn btn-secondary btn-block" onClick={() => fileRef.current?.click()}>{t('chooseFile')}</button>
           </div>
         </div>
