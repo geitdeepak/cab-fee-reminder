@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { imageFileToDataUrl } from '../../lib/image.js';
+import { isValidUpiId, buildPayLink } from '../../lib/payLink.js';
 import { useUi } from '../../state/ui.jsx';
 import { useOperator, useSettingsMap } from '../../state/hooks.js';
 import { saveOperatorProfile } from '../../actions/auth.js';
@@ -32,8 +33,9 @@ export function Settings() {
   }, [operator?.id, operator?.name, operator?.phone, operator?.upi_id]);
 
   async function saveProfile() {
-    await saveOperatorProfile({ name, phone, business_name: operator?.business_name || '', upi_id: upi });
-    toast('Saved ✓');
+    const upiOk = !upi || isValidUpiId(upi);
+    await saveOperatorProfile({ name, phone, business_name: operator?.business_name || '', upi_id: upiOk ? upi : operator?.upi_id || '' });
+    toast(upiOk ? 'Saved ✓' : t('upiInvalid'));
   }
 
   async function onQrFile(e) {
@@ -82,6 +84,17 @@ export function Settings() {
               <label>{t('upiId')}</label>
               <input class="input" value={upi} placeholder="name@bank" autocapitalize="off" onInput={(e) => setUpi(e.currentTarget.value.trim())} onBlur={saveProfile} />
               <div style="font-size:11.5px;color:var(--color-neutral-700)">{t('upiHelp')}</div>
+              {isValidUpiId(upi) && (
+                <a
+                  class="btn btn-secondary"
+                  style="align-self:flex-start;text-decoration:none"
+                  target="_blank"
+                  rel="noopener"
+                  href={buildPayLink({ baseUrl: window.location.origin, upiId: upi, name: operator?.business_name || name, amount: 1, note: 'Test payment' })}
+                >
+                  {t('testPayLink')}
+                </a>
+              )}
             </div>
             <div class="field">
               <label>{t('paymentQr')}</label>

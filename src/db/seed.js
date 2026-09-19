@@ -21,6 +21,7 @@ export const SEEDED_TEMPLATES = [
       'Due date : *{due_date}*\n' +
       'Pickup   : {pickup_point}\n\n' +
       'Kripya due date tak payment kar dijiyega.\n' +
+      'Payment link: {pay_link}\n' +
       'UPI: {upi_id}\n\n' +
       'Payment hone par receipt bhej diya jayega. Agar payment ho chuka hai to please bata dijiye.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
@@ -36,6 +37,7 @@ export const SEEDED_TEMPLATES = [
       'Period : {period}\n' +
       'Amount : *Rs. {amount}*\n\n' +
       'Kripya aaj hi payment kar dijiye.\n' +
+      'Payment link: {pay_link}\n' +
       'UPI: {upi_id}\n\n' +
       'Agar payment ho chuka hai to please mujhe bata dijiye, main record update kar lunga.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
@@ -52,6 +54,7 @@ export const SEEDED_TEMPLATES = [
       'Amount   : *Rs. {amount}*\n' +
       'Due date : {due_date}\n\n' +
       'Kripya jaldi payment kar dijiye.\n' +
+      'Payment link: {pay_link}\n' +
       'UPI: {upi_id}\n\n' +
       'Agar aap payment kar chuke hain to screenshot bhej dijiye, main record theek kar dunga. ' +
       'Koi dikkat ho to mujhe call kar lijiye, hum baat karke hal nikal lenge.\n\n' +
@@ -70,6 +73,7 @@ export const SEEDED_TEMPLATES = [
       'Due date : {due_date}\n\n' +
       'Payment clear na hone par mujhe cab service temporarily rokni pad sakti hai, jo hum nahi chahte. ' +
       'Kripya aaj hi payment kar dijiye ya mujhe call karke bata dijiye.\n' +
+      'Payment link: {pay_link}\n' +
       'UPI: {upi_id}\n\n' +
       'Agar payment ho chuka hai to please mujhe turant bata dijiye.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
@@ -94,7 +98,7 @@ export const SEEDED_TEMPLATES = [
 
 // The first-release wording. A stored template that still matches this exactly
 // was never edited by the driver, so it is safe to upgrade to the text above.
-const LEGACY_BODIES = {
+const LEGACY_V1 = {
   advance:
     'Namaste {parent_name} ji,\n\n{student_name} ({class}) ki cab fee ki due date *{due_date}* hai.\n\nPeriod : {period}\nAmount : *Rs. {amount}*\nPickup : {pickup_point}\n\nTime par payment kar dijiyega. Dhanyavaad.\n\n{operator_name}\n{operator_phone}',
   due:
@@ -131,7 +135,7 @@ export const DEFAULT_SETTINGS = {
   // driver with many students; falls back to the other parent if no number.
   reminder_recipients: 'father',
   payment_qr: null, // data URL of the driver's own UPI QR image
-  attach_qr: true, // send the QR with every reminder when one is saved
+  attach_qr: false, // off by default: the share sheet cannot pre-fill the parent's chat; the Pay link covers payment
   quiet_hours_enabled: true,
   quiet_hours_start: 8,
   quiet_hours_end: 20,
@@ -157,7 +161,9 @@ export async function seedIfEmpty(db) {
         // Upgrade only templates the driver never touched.
         for (const seeded of SEEDED_TEMPLATES) {
           const stored = await db.templates.get(seeded.id);
-          if (stored && stored.body === LEGACY_BODIES[seeded.id]) {
+          // v1 = first release; v2 = the previous wording, which is today's text minus the link line.
+          const v2 = seeded.body.replace('Payment link: {pay_link}\n', '');
+          if (stored && (stored.body === LEGACY_V1[seeded.id] || stored.body === v2)) {
             await db.templates.update(seeded.id, { body: seeded.body });
           }
         }
@@ -169,6 +175,13 @@ export async function seedIfEmpty(db) {
       if (rows.length) await db.settings.bulkAdd(rows);
 
       const metaKeys = new Set(await db.meta.toCollection().primaryKeys());
+      // One-time: earlier builds defaulted QR attachment to on. Switch it off once so the
+      // faster pre-filled chat is the default; a driver can turn it back on in Settings.
+      if (!metaKeys.has('attach_qr_default_off')) {
+        await db.settings.put({ key: 'attach_qr', value: false });
+        await db.meta.put({ key: 'attach_qr_default_off', value: true });
+        metaKeys.add('attach_qr_default_off');
+      }
       const metaDefaults = [
         { key: 'schema_version', value: SCHEMA_VERSION },
         { key: 'last_backup_at', value: null },

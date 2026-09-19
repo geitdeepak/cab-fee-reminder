@@ -16,6 +16,9 @@ import { getSettingsMap, stageSettingsFromMap } from './settings.js';
 import { openWhatsApp, buildWaLink, sharePaymentQr, downloadDataUrl } from '../lib/whatsapp.js';
 import { getOperator } from './auth.js';
 
+// The link in a message must point at the site the driver is actually using.
+const siteOrigin = () => (typeof window !== 'undefined' && window.location ? window.location.origin : '');
+
 const STAGE_ORDER = { final: 0, overdue: 1, due: 2, advance: 3 };
 
 export async function buildQueue() {
@@ -46,7 +49,8 @@ export async function buildQueue() {
     stageSettings: stageSettingsFromMap(settingsMap),
     today,
     operator: operator || {},
-    recipientMode: settingsMap.reminder_recipients || 'father'
+    recipientMode: settingsMap.reminder_recipients || 'father',
+    payBaseUrl: siteOrigin()
   });
 
   rows.sort((a, b) => (STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage]) || (b.days_overdue - a.days_overdue));
@@ -134,7 +138,7 @@ export async function manualRowsForInvoice(invoiceId) {
   const today = todayISO();
   const stage = stageForManual(invoice, today);
   return buildRecipients(student, settingsMap.reminder_recipients || 'father').map((recipient) =>
-    makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator: operator || {} })
+    makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator: operator || {}, payBaseUrl: siteOrigin() })
   );
 }
 

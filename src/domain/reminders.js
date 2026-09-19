@@ -2,6 +2,7 @@
 // the duplicate-prevention guards. Pure functions — no IndexedDB calls.
 import { addDays, formatDateHuman, formatPeriodHuman, daysBetween, compareISO } from './dates.js';
 import { isSettled, outstandingBalance } from './invoices.js';
+import { buildPayLink } from '../lib/payLink.js';
 
 export const STAGES = ['advance', 'due', 'overdue', 'final'];
 
@@ -18,6 +19,7 @@ export const KNOWN_PLACEHOLDERS = [
   'operator_name',
   'operator_phone',
   'upi_id',
+  'pay_link',
   // receipt-only
   'receipt_no',
   'mode',
@@ -31,8 +33,8 @@ export function validateTemplate(body) {
 }
 
 // A line that mentions one of these is dropped entirely when the value is empty,
-// so a driver with no UPI id never sends a dangling "UPI: " line.
-const OPTIONAL_LINE_KEYS = ['upi_id'];
+// so a driver with no UPI id never sends a dangling "UPI: " or "Payment link: " line.
+const OPTIONAL_LINE_KEYS = ['upi_id', 'pay_link'];
 
 export function composeMessage(body, dataMap) {
   const value = (key) => (dataMap[key] !== undefined && dataMap[key] !== null ? String(dataMap[key]) : '');
@@ -87,7 +89,7 @@ export function stageForManual(invoice, today) {
   return 'advance';
 }
 
-export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {} }) {
+export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {}, payBaseUrl = '' }) {
   const balance = outstandingBalance(invoice);
   const late = Math.max(0, daysBetween(invoice.due_date, today));
   const first = firstName(student);
@@ -120,7 +122,15 @@ export function makeReminderRow({ invoice, student, pickup, recipient, stage, to
       days_overdue: String(late),
       operator_name: operator.name || '',
       operator_phone: operator.phone || '',
-      upi_id: operator.upi_id || ''
+      upi_id: operator.upi_id || '',
+      // Tappable link to this site's /pay page with the amount pre-filled; '' when no valid UPI id is set.
+      pay_link: buildPayLink({
+        baseUrl: payBaseUrl,
+        upiId: operator.upi_id,
+        name: operator.business_name || operator.name,
+        amount: balance,
+        note: `Cab fee ${student.name}`
+      })
     }
   };
 }
@@ -140,7 +150,8 @@ export function buildReminderQueue({
   stageSettings,
   today,
   operator = {},
-  recipientMode = 'both'
+  recipientMode = 'both',
+  payBaseUrl = ''
 }) {
   const rows = [];
 
@@ -161,7 +172,7 @@ export function buildReminderQueue({
     for (const recipient of buildRecipients(student, recipientMode)) {
       const key = `${inv.id}|${recipient.type}|${stage}`;
       if (loggedKeys.has(key)) continue;
-      rows.push(makeReminderRow({ invoice: inv, student, pickup, recipient, stage, today, operator }));
+      rows.push(makeReminderRow({ invoice: inv, student, pickup, recipient, stage, today, operator, payBaseUrl }));
     }
   }
 

@@ -61,14 +61,18 @@ OD-10 Hinglish default with English toggle.
 - "Send reminder now" on any unpaid bill sends today's message without waiting for the schedule.
 - Message wording lives in `src/db/seed.js`; templates the driver never edited are upgraded
   automatically. A line containing `{upi_id}` is dropped when no UPI id is set.
-- Payment QR: upload once in Settings. With it saved, each reminder opens the phone's share sheet
-  with the QR image and the message (the driver picks the parent's chat, because WhatsApp cannot
-  pre-fill a recipient when an image is attached). Turn it off in Settings to get the pre-filled chat.
+- **Payment link:** with a UPI id saved in Settings, every reminder carries a tappable link to this
+  site's public `/pay` page (`src/ui/PayPage.jsx`) with the driver's UPI id and the exact amount owed in
+  the URL. The parent's phone opens GPay/PhonePe/Paytm pre-filled. No server, nothing stored, works for
+  every driver from the one deployment. The page always shows the payee name and UPI id so a parent can
+  check them. Not yet tested on real phones (UPI deep links vary by phone and app).
+- Payment QR (optional, off by default): upload once in Settings and switch on "send the QR with every
+  reminder". WhatsApp cannot pre-fill a recipient when an image is attached, so the driver picks the
+  chat from the share sheet, which is slower than the pre-filled chat.
 
 ## Not implemented yet
 
 - Pause enrolment; fee-plan discount editor; undoing a cancelled bill.
-- Per-invoice UPI QR generated in the app (today the driver's own QR image is sent).
 - Weekly launch prompt for backups (the banner and the 30-day full-screen reminder are done).
 - Biometric unlock.
 - Install-required onboarding gate (SRS 12.4), delete-permanently action, payment reversal screen.

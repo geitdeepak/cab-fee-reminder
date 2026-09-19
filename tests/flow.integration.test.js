@@ -213,3 +213,31 @@ describe('cancelling a bill', () => {
     expect(rows.some((r) => r.invoice_id === untouched.id)).toBe(false); // its reminders stop
   });
 });
+
+describe('upgrading an existing phone', () => {
+  it('replaces untouched previous-wording templates with the payment-link ones, but never an edited template', async () => {
+    const { seedIfEmpty, SEEDED_TEMPLATES } = await import('../src/db/seed.js');
+    const seeded = (id) => SEEDED_TEMPLATES.find((t) => t.id === id).body;
+
+    await db.templates.update('due', { body: seeded('due').replace('Payment link: {pay_link}\n', '') }); // previous wording
+    await db.templates.update('final', { body: 'My own wording {student_name}' }); // driver's edit
+    await seedIfEmpty(db);
+
+    expect((await db.templates.get('due')).body).toContain('{pay_link}');
+    expect((await db.templates.get('final')).body).toBe('My own wording {student_name}');
+    await db.templates.update('final', { body: seeded('final') });
+  });
+
+  it('turns QR attachment off once for phones that had it on, and leaves later choices alone', async () => {
+    const { seedIfEmpty } = await import('../src/db/seed.js');
+    await db.settings.put({ key: 'attach_qr', value: true });
+    await db.meta.delete('attach_qr_default_off');
+    await seedIfEmpty(db);
+    expect((await db.settings.get('attach_qr')).value).toBe(false);
+
+    await db.settings.put({ key: 'attach_qr', value: true }); // driver turns it back on
+    await seedIfEmpty(db);
+    expect((await db.settings.get('attach_qr')).value).toBe(true);
+    await db.settings.put({ key: 'attach_qr', value: false });
+  });
+});

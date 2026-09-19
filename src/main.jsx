@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app.jsx';
+import { PayPage } from './ui/PayPage.jsx';
 import './styles/global.css';
 
 function Root() {
@@ -24,4 +25,8 @@ function Root() {
   return <App needRefresh={needRefresh} onRefresh={onRefresh} />;
 }
 
-render(<Root />, document.getElementById('app'));
+// /pay is the public page a parent opens from a reminder's payment link. It runs
+// without the app, its database or a service worker.
+const isPayPage = window.location.pathname.replace(/\/+$/, '') === '/pay';
+
+render(isPayPage ? <PayPage /> : <Root />, document.getElementById('app'));

@@ -31,14 +31,15 @@
 1. नीचे "Reminder" दबाइए।
 2. किसी parent के आगे **"Bhejiye"** दबाइए। WhatsApp में मैसेज लिखा हुआ खुल जाएगा।
 3. **WhatsApp के अंदर Send आपको खुद दबाना है** — ऐप उसे नहीं दबा सकता।
-4. अगर आपने QR डाला है, तो WhatsApp की "share" लिस्ट खुलेगी — वहाँ उस parent का चैट चुनिए।
-5. "Chhodiye" से किसी को छोड़ सकते हैं। नीचे "Aaj bheje gaye" में भेजे हुए दिखते हैं; भूल से गलत दबा तो **Undo**।
+4. "Chhodiye" से किसी को छोड़ सकते हैं। नीचे "Aaj bheje gaye" में भेजे हुए दिखते हैं; भूल से गलत दबा तो **Undo**।
 
 रिमाइंडर सिर्फ़ तब दिखते हैं जब उनका समय आए: due date से 3 दिन पहले, due के दिन, और 5 व 15 दिन बाद। रात 8 से सुबह 8 बजे तक लिस्ट खाली रहती है।
 किसी बिल का रिमाइंडर अभी भेजना हो तो "Paisa" → बिल खोलिए → **"Reminder abhi bhejiye"**।
 
-## 6. अपना QR और UPI (एक बार)
-"Aur" → "Setting" → "Payment ki detail": अपना **UPI ID** लिखिए और **QR की फोटो** (PhonePe/GPay का screenshot चलेगा) चुनिए। इसके बाद हर रिमाइंडर के साथ QR अपने-आप जुड़ जाएगा।
+## 6. अपना UPI ID (एक बार) — पेमेंट लिंक के लिए
+"Aur" → "Setting" → "Payment ki detail" में अपना **UPI ID** लिखिए (जैसे naam@bank)। इसके बाद हर रिमाइंडर में एक **"Payment link"** अपने-आप जुड़ जाएगा। माता-पिता उस लिंक को दबाएँगे तो उनके फ़ोन में GPay / PhonePe / Paytm खुलेगा और **रकम पहले से भरी होगी** — वे सिर्फ़ पेमेंट पक्का करेंगे।
+- "Payment link check kijiye (₹1)" दबाकर देख लीजिए कि माता-पिता को क्या दिखेगा।
+- (ज़रूरी नहीं) चाहें तो अपने QR की फोटो भी डाल सकते हैं और "Har reminder ke saath QR bhejiye" चालू कर सकते हैं। पर तब WhatsApp की "share" लिस्ट खुलती है और parent का चैट खुद चुनना पड़ता है, इसलिए यह धीमा है।
 
 ## 7. पैसा मिलने पर
 "Paisa" → बच्चे का बिल दबाइए → कितना मिला और Cash/UPI चुनिए → "Payment save kijiye"। फिर "Receipt WhatsApp par bhejiye" से रसीद भेज दीजिए। कम मिला हो तो वही रकम लिखिए, बाकी बकाया रहेगा।
@@ -90,14 +91,15 @@ More → Import from Excel/CSV. Use "Download a sample file", fill in your list 
 1. Tap "Reminders" at the bottom.
 2. Tap **"Send"** next to a parent. WhatsApp opens with the message ready.
 3. **You must tap Send inside WhatsApp yourself** — the app cannot press it.
-4. If you added a QR, WhatsApp's "share" list opens — pick that parent's chat there.
-5. "Skip" leaves someone out. Sent ones are listed under "Sent today"; tap **Undo** if you sent one by mistake.
+4. "Skip" leaves someone out. Sent ones are listed under "Sent today"; tap **Undo** if you sent one by mistake.
 
 Reminders appear only when their time comes: 3 days before the due date, on the due day, and 5 and 15 days after. Between 8 pm and 8 am the list stays empty.
 To remind about one bill right now: Money → open the bill → **"Send reminder now"**.
 
-## 6. Your QR and UPI (once)
-More → Settings → Payment details: enter your **UPI ID** and choose your **QR photo** (a PhonePe/GPay screenshot works). After that the QR goes with every reminder automatically.
+## 6. Your UPI ID (once) — for the payment link
+More → Settings → Payment details: enter your **UPI ID** (like name@bank). After that every reminder automatically includes a **"Payment link"**. When the parent taps it, GPay / PhonePe / Paytm opens with **the amount already filled in** — they only confirm the payment.
+- Tap "Check the payment link (₹1)" to see exactly what a parent will see.
+- (Optional) You can also add your QR photo and turn on "Send the QR with every reminder". But then WhatsApp opens its "share" list and you must pick the parent's chat yourself, so it is slower.
 
 ## 7. When a parent pays
 Money → tap the child's bill → enter the amount and choose Cash/UPI → "Save payment". Then "Send receipt on WhatsApp". If they paid only part, enter that amount; the rest stays due.
