@@ -9,6 +9,8 @@ const PLAN_ALIASES = {
   yearly: 'yearly', year: 'yearly', annual: 'yearly', '12': 'yearly', y: 'yearly'
 };
 
+const LANGUAGE_ALIASES = { hinglish: 'hinglish', hindi: 'hinglish', hi: 'hinglish', english: 'english', en: 'english', eng: 'english' };
+
 const YES = new Set(['y', 'yes', 'true', '1', 'paid', 'haan', 'ha', 'han', 'done', 'x']);
 
 function num(v) {
@@ -65,6 +67,11 @@ export function planImport(records, { pickupPoints, students, defaults = { plan:
     const plan = planRaw ? PLAN_ALIASES[planRaw] : defaults.plan;
     if (!plan) errors.push(`Plan "${r.plan}" is not monthly, quarterly or yearly`);
 
+    // Blank = follow the driver's default message language.
+    const langRaw = String(r.message_language || '').trim().toLowerCase();
+    const messageLanguage = langRaw ? LANGUAGE_ALIASES[langRaw] : '';
+    if (langRaw && !messageLanguage) errors.push(`Language "${r.message_language}" is not English or Hinglish`);
+
     let dueDay = defaults.dueDay;
     if (r.due_day) {
       dueDay = Math.round(num(r.due_day));
@@ -83,7 +90,8 @@ export function planImport(records, { pickupPoints, students, defaults = { plan:
         mother_phone: mother,
         blood_group: r.blood_group || 'Unknown',
         allergies: r.allergies || '',
-        notes: r.notes || ''
+        notes: r.notes || '',
+        message_language: messageLanguage || ''
       },
       pickupName,
       pickupId: pickup ? pickup.id : null,

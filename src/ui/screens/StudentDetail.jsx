@@ -68,6 +68,7 @@ export function StudentDetail() {
               [t('feePlan'), plan ? `${plan.label} · ${formatCurrency(enrolment?.cycle_amount)}` : 'Not enrolled'],
               [t('fatherName'), `${student.father_name} · ${student.father_phone || '—'}`],
               [t('motherName'), `${student.mother_name} · ${student.mother_phone || '—'}`],
+              [t('messageLanguage'), student.message_language === 'english' ? 'English' : student.message_language === 'hinglish' ? 'Hinglish' : t('defaultOption')],
               ['Joined', formatDateHuman(student.joined_on)],
               ['Status', student.status === 'active' ? t('active') : t('inactive')]
             ].map(([label, value]) => (

@@ -3,11 +3,12 @@
 // SRS (14.3 Client Responsibilities) the operator supplies their own pickup
 // points and fares; the app starts as a genuinely empty register.
 import { SCHEMA_VERSION } from './db.js';
+import { ENGLISH_TEMPLATES } from './templatesEn.js';
 
 // Parent-facing wording. Plain "Rs." (not the rupee sign) because some older
 // Android fonts draw a box for it (SRS 8.3). A line containing {upi_id} is
 // dropped automatically when the driver has not entered a UPI id.
-export const SEEDED_TEMPLATES = [
+const HINGLISH_TEMPLATES = [
   {
     id: 'advance',
     label: 'Advance Notice (D − 3)',
@@ -104,6 +105,8 @@ export const SEEDED_TEMPLATES = [
   }
 ];
 
+export const SEEDED_TEMPLATES = [...HINGLISH_TEMPLATES, ...ENGLISH_TEMPLATES];
+
 // The first-release wording. A stored template that still matches this exactly
 // was never edited by the driver, so it is safe to upgrade to the text above.
 const LEGACY_V1 = {
@@ -142,6 +145,8 @@ export const DEFAULT_SETTINGS = {
   // 'father' | 'mother' | 'both'. One parent by default halves the taps for a
   // driver with many students; falls back to the other parent if no number.
   reminder_recipients: 'father',
+  // 'hinglish' | 'english'. A student can override it (students.message_language).
+  message_language: 'hinglish',
   payment_qr: null, // data URL of the driver's own UPI QR image
   attach_qr: false, // off by default: the share sheet cannot pre-fill the parent's chat; the Pay link covers payment
   quiet_hours_enabled: true,
@@ -166,9 +171,15 @@ export async function seedIfEmpty(db) {
       if ((await db.templates.count()) === 0) {
         await db.templates.bulkAdd(SEEDED_TEMPLATES);
       } else {
-        // Upgrade only templates the driver never touched.
+        // Add any template this phone does not have yet (e.g. the English set), and upgrade
+        // only earlier-wording templates the driver never touched.
         for (const seeded of SEEDED_TEMPLATES) {
           const stored = await db.templates.get(seeded.id);
+          if (!stored) {
+            await db.templates.add(seeded);
+            continue;
+          }
+          if (!LEGACY_V1[seeded.id]) continue;
           // Wordings an untouched template may still have: v1 first release, v2 UPI line only, v3 link + UPI line.
           const block = '{qr_note}\nUPI ID: {upi_id}\nMobile number: {operator_phone}\nPayment link: {pay_link}\n';
           const v3 = seeded.body.replace(block, 'Payment link: {pay_link}\nUPI: {upi_id}\n'); // previous release

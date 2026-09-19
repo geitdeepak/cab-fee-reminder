@@ -52,6 +52,8 @@ export async function saveStudent(data) {
     joined_on: data.joined_on || now.slice(0, 10),
     status: data.status || 'active',
     notes: (data.notes || '').trim(),
+    // '' = follow the driver's default message language
+    message_language: ['hinglish', 'english'].includes(data.message_language) ? data.message_language : '',
     updated_at: now
   };
   if (data.id) {

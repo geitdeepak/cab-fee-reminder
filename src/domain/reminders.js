@@ -57,6 +57,26 @@ function firstName(student) {
   return (student.name || '').split(' ')[0];
 }
 
+export const LANGUAGES = ['hinglish', 'english'];
+
+/** A student's own choice wins; otherwise the driver's default. Anything unknown is Hinglish. */
+export function languageFor(student, defaultLanguage) {
+  const pick = student.message_language || defaultLanguage;
+  return pick === 'english' ? 'english' : 'hinglish';
+}
+
+/** English messages live in templates whose id ends with "_en". */
+export function templateIdFor(base, language) {
+  return language === 'english' ? `${base}_en` : base;
+}
+
+/** How the message greets the parent: their first name, or a fallback that reads naturally. */
+export function parentNameFor(recipientName, student, language) {
+  if (recipientName) return recipientName.split(' ')[0];
+  const first = firstName(student);
+  return language === 'english' ? `Parent of ${first}` : `${first} ke parent`;
+}
+
 /**
  * Who a reminder goes to. `mode` is 'father', 'mother' or 'both'. A single
  * -parent mode falls back to the other parent when the preferred one has no
@@ -90,10 +110,11 @@ export function stageForManual(invoice, today) {
   return 'advance';
 }
 
-export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {}, payBaseUrl = '' }) {
+export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {}, payBaseUrl = '', defaultLanguage = 'hinglish' }) {
   const balance = outstandingBalance(invoice);
   const late = Math.max(0, daysBetween(invoice.due_date, today));
   const first = firstName(student);
+  const language = languageFor(student, defaultLanguage);
   const parentLabel = recipient.name || `${first} ke ${recipient.type === 'father' ? 'Papa' : 'Mummy'}`;
 
   return {
@@ -107,12 +128,13 @@ export function makeReminderRow({ invoice, student, pickup, recipient, stage, to
     due_date: invoice.due_date,
     days_overdue: late,
     stage,
-    template_id: stage,
+    language,
+    template_id: templateIdFor(stage, language),
     recipient_type: recipient.type,
     recipient_name: parentLabel,
     recipient_phone: recipient.phone,
     data_map: {
-      parent_name: recipient.name ? recipient.name.split(' ')[0] : `${first} ke parent`,
+      parent_name: parentNameFor(recipient.name, student, language),
       student_name: student.name,
       class: student.class_name,
       school: student.school_name || '',
@@ -150,7 +172,8 @@ export function buildReminderQueue({
   today,
   operator = {},
   recipientMode = 'both',
-  payBaseUrl = ''
+  payBaseUrl = '',
+  defaultLanguage = 'hinglish'
 }) {
   const rows = [];
 
@@ -171,7 +194,7 @@ export function buildReminderQueue({
     for (const recipient of buildRecipients(student, recipientMode)) {
       const key = `${inv.id}|${recipient.type}|${stage}`;
       if (loggedKeys.has(key)) continue;
-      rows.push(makeReminderRow({ invoice: inv, student, pickup, recipient, stage, today, operator, payBaseUrl }));
+      rows.push(makeReminderRow({ invoice: inv, student, pickup, recipient, stage, today, operator, payBaseUrl, defaultLanguage }));
     }
   }
 

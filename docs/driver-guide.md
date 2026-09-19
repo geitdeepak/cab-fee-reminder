@@ -45,6 +45,11 @@
 
 ध्यान रखिए: PhonePe और Google Pay लिंक से सीधे पेमेंट शुरू नहीं होने देते ("security reasons"), इसलिए पेमेंट का भरोसेमंद तरीका UPI ID / नंबर / QR ही है।
 
+## 6ख. मैसेज की भाषा — Hinglish या English
+- सभी के लिए: "Aur" → "Setting" → **"Message ki bhasha"** में **Hinglish** (शुरू में यही चुना होता है) या **English** चुनिए।
+- किसी एक बच्चे के लिए अलग: बच्चे का फॉर्म खोलिए → **"Message ki bhasha"** में **Default / Hinglish / English** में से चुनिए। (Excel में भी एक `language` कॉलम भर सकते हैं।)
+- रसीद भी उसी भाषा में जाती है। मैसेज बदलना हो तो "Aur" → "Message" में ऊपर **Hinglish | English** बटन से भाषा चुनकर लिखे हुए मैसेज बदल सकते हैं।
+
 ## 7. पैसा मिलने पर
 "Paisa" → बच्चे का बिल दबाइए → कितना मिला और Cash/UPI चुनिए → "Payment save kijiye"। फिर "Receipt WhatsApp par bhejiye" से रसीद भेज दीजिए। कम मिला हो तो वही रकम लिखिए, बाकी बकाया रहेगा।
 गलती से बना बिल हो तो उसी स्क्रीन पर **"Ye bill cancel kijiye"**।
@@ -55,6 +60,7 @@
 ## 9. हर हफ़्ते बैकअप — सबसे ज़रूरी
 फ़ोन खो गया तो यही फ़ाइल आपका डेटा बचाएगी।
 "Aur" → "Backup" → **"Abhi backup kijiye"** → फ़ाइल Google Drive, email या अपने ही WhatsApp पर भेज दीजिए। इसे किसी ग्रुप में मत डालिए।
+अगर share लिस्ट न खुले या "Permission denied" जैसा कुछ आए, तो ऐप अपने-आप फ़ाइल फ़ोन के **Downloads** में रख देता है — वहाँ से उसे Google Drive या WhatsApp पर भेज दीजिए।
 नए फ़ोन पर: "Backup" → "File chuniye" से वही फ़ाइल चुनिए।
 
 ## 10. MPIN भूल गए / बार-बार गलत हुआ
@@ -109,6 +115,11 @@ More → Settings:
 
 Note: PhonePe and Google Pay do not let a payment start straight from a link ("security reasons"), so the reliable ways to pay are the UPI ID, the mobile number and the QR.
 
+## 6b. Message language — Hinglish or English
+- For everyone: More → Settings → **"Message language"**: choose **Hinglish** (the starting choice) or **English**.
+- For one student: open the student's form → **"Message language"** → **Default / Hinglish / English**. (In an Excel import you can fill a `language` column too.)
+- The receipt is sent in the same language. To change the wording, go to More → Message and pick the language with the **Hinglish | English** button at the top.
+
 ## 7. When a parent pays
 Money → tap the child's bill → enter the amount and choose Cash/UPI → "Save payment". Then "Send receipt on WhatsApp". If they paid only part, enter that amount; the rest stays due.
 Bill made by mistake? On the same screen tap **"Cancel this bill"**.
@@ -119,6 +130,7 @@ Students → open the child. The orange box at the top shows blood group, allerg
 ## 9. Back up every week — the most important habit
 If the phone is lost, this file is the only thing that saves your data.
 More → Backup & restore → **"Back up now"** → send the file to Google Drive, email or your own WhatsApp. Never post it in a group.
+If the share list does not open, or you see "Permission denied", the app saves the file to your phone's **Downloads** instead — send it to Google Drive or WhatsApp from there.
 On a new phone: Backup & restore → "Choose a file" and pick that file.
 
 ## 10. Wrong MPIN / forgotten MPIN

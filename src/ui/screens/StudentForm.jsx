@@ -16,7 +16,8 @@ const BLOOD_OPTIONS = ['A+', 'A−', 'B+', 'B−', 'AB+', 'AB−', 'O+', 'O−',
 const EMPTY = {
   name: '', class_name: '', school_name: '', father_name: '', father_phone: '',
   mother_name: '', mother_phone: '', emergency_phone: '', pickup_point_id: '',
-  blood_group: 'Unknown', allergies: '', notes: '', joined_on: todayISO(), status: 'active'
+  blood_group: 'Unknown', allergies: '', notes: '', joined_on: todayISO(), status: 'active',
+  message_language: '' // '' = follow the default set in Settings
 };
 
 export function StudentForm() {
@@ -67,7 +68,7 @@ export function StudentForm() {
         setAddedCount((n) => n + 1);
         toast(`${form.name} ✓`);
         // Keep what is usually the same for the next child on the route.
-        setForm({ ...EMPTY, pickup_point_id: form.pickup_point_id, school_name: form.school_name });
+        setForm({ ...EMPTY, pickup_point_id: form.pickup_point_id, school_name: form.school_name, message_language: form.message_language });
         setFee((f) => ({ ...f, paid: false, oldDues: '' }));
         document.querySelector('.main-scroll')?.scrollTo(0, 0);
       } else {
@@ -137,6 +138,17 @@ export function StudentForm() {
 
           {phoneInput('father_phone', t('fatherPhone'))}
           {phoneInput('mother_phone', t('motherPhone'))}
+
+          <div class="field">
+            <label>{t('messageLanguage')}</label>
+            <div class="chip-row">
+              {[['', t('defaultOption')], ['hinglish', 'Hinglish'], ['english', 'English']].map(([key, label]) => (
+                <button key={key || 'default'} class={`chip${(form.message_language || '') === key ? ' active' : ''}`} onClick={() => set('message_language', key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {!isEdit && (
             <div style="display:flex;flex-direction:column;gap:14px;border-top:2px solid var(--color-text);padding-top:14px">

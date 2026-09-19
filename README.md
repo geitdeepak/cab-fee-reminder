@@ -74,6 +74,21 @@ OD-10 Hinglish default with English toggle.
   "Send with QR" (share sheet: image + message). WhatsApp cannot pre-fill a recipient when an image is
   attached, so the driver picks the chat. "Send the QR with every reminder" makes the QR the default.
 
+## Message language
+
+Reminders and receipts can be sent in Hinglish (default) or English. The driver's default is in Settings;
+a student can override it on their form (`students.message_language`, blank = follow the default) or with a
+`language` column in an import. English messages are the templates whose id ends in `_en`
+(`src/db/templatesEn.js`), editable on the Message screen. A missing English template falls back to the
+Hinglish one so a message is never empty, and phones that only have the older templates get the English set
+added on the next launch. Hindi in Devanagari is not included.
+
+## Backups
+
+Backup tries the phone's share sheet first and falls back to saving the file to Downloads if sharing is
+refused ("Permission denied" is the browser's NotAllowedError) — it never fails outright. Closing the
+share sheet without sending does not count as a backup.
+
 ## Not implemented yet
 
 - Pause enrolment; fee-plan discount editor; undoing a cancelled bill.

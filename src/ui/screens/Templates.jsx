@@ -21,7 +21,14 @@ export function Templates() {
   const [activeId, setActiveId] = useState('advance');
   const [body, setBody] = useState('');
 
+  const lang = activeId.endsWith('_en') ? 'english' : 'hinglish';
+  const visible = templates.filter((tp) => (tp.language || 'hinglish') === lang);
   const current = templates.find((tp) => tp.id === activeId);
+
+  function switchLanguage(next) {
+    const base = activeId.replace(/_en$/, '');
+    setActiveId(next === 'english' ? `${base}_en` : base);
+  }
 
   useEffect(() => {
     if (current) setBody(current.body);
@@ -46,8 +53,15 @@ export function Templates() {
     <div style="min-height:100vh;display:flex;flex-direction:column">
       <TopBar title={t('templates')} eyebrow="S-11" />
       <div class="main-scroll scr">
+        <div style="padding:12px 14px 0;display:flex;align-items:center;gap:10px;background:var(--color-neutral-100)">
+          <span class="stat-label">{t('messageLanguage')}</span>
+          <div class="lang-toggle">
+            <button class={lang === 'hinglish' ? 'active' : ''} onClick={() => switchLanguage('hinglish')}>Hinglish</button>
+            <button class={lang === 'english' ? 'active' : ''} onClick={() => switchLanguage('english')}>English</button>
+          </div>
+        </div>
         <div style="display:flex;overflow-x:auto;border-bottom:2px solid var(--color-text);background:var(--color-neutral-100)">
-          {templates.map((tp) => (
+          {visible.map((tp) => (
             <button
               key={tp.id}
               onClick={() => setActiveId(tp.id)}

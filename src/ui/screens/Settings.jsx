@@ -133,6 +133,18 @@ export function Settings() {
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('messageLanguage')}</div>
+            <div class="chip-row">
+              {[['hinglish', 'Hinglish'], ['english', 'English']].map(([key, label]) => (
+                <button key={key} class={`chip${(settingsMap.message_language || 'hinglish') === key ? ' active' : ''}`} onClick={() => setSetting('message_language', key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style="font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)">{t('messageLanguageHelp')}</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
             <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">Billing</div>
             <div class="field">
               <label>{t('defaultDueDay')}</label>

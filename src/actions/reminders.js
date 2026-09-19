@@ -50,24 +50,32 @@ export async function buildQueue() {
     today,
     operator: operator || {},
     recipientMode: settingsMap.reminder_recipients || 'father',
-    payBaseUrl: siteOrigin()
+    payBaseUrl: siteOrigin(),
+    defaultLanguage: settingsMap.message_language || 'hinglish'
   });
 
   rows.sort((a, b) => (STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage]) || (b.days_overdue - a.days_overdue));
   return { rows, quiet: false };
 }
 
+/** Falls back to the Hinglish original if an English template is missing (e.g. right after
+ * restoring an older backup), so a message is never sent empty. */
 export async function getTemplateBody(templateId) {
   const t = await db.templates.get(templateId);
-  return t ? t.body : '';
+  if (t) return t.body;
+  const base = templateId.replace(/_en$/, '');
+  return base !== templateId ? getTemplateBody(base) : '';
 }
 
-const QR_NOTE = 'QR code is message ke saath attached hai.';
+const QR_NOTES = {
+  hinglish: 'QR code is message ke saath attached hai.',
+  english: 'A QR code is attached to this message.'
+};
 
 /** attachQr decides whether the message tells the parent a QR image is attached. */
 export async function composeForRow(row, { attachQr = false } = {}) {
   const body = await getTemplateBody(row.template_id);
-  return composeMessage(body, { ...row.data_map, qr_note: attachQr ? QR_NOTE : '' });
+  return composeMessage(body, { ...row.data_map, qr_note: attachQr ? QR_NOTES[row.language] || QR_NOTES.hinglish : '' });
 }
 
 /** Writes the reminder_log row BEFORE opening WhatsApp (8.4, step 2) so the
@@ -141,7 +149,7 @@ export async function manualRowsForInvoice(invoiceId) {
   const today = todayISO();
   const stage = stageForManual(invoice, today);
   return buildRecipients(student, settingsMap.reminder_recipients || 'father').map((recipient) =>
-    makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator: operator || {}, payBaseUrl: siteOrigin() })
+    makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator: operator || {}, payBaseUrl: siteOrigin(), defaultLanguage: settingsMap.message_language || 'hinglish' })
   );
 }
 

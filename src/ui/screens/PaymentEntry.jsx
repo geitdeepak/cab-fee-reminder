@@ -6,7 +6,7 @@ import { getInvoice, recordPayment, balanceOf, cancelInvoice } from '../../actio
 import { useOperator } from '../../state/hooks.js';
 import { formatCurrency } from '../../lib/format.js';
 import { todayISO, formatDateHuman, formatPeriodHuman } from '../../domain/dates.js';
-import { composeMessage } from '../../domain/reminders.js';
+import { composeMessage, languageFor, templateIdFor, parentNameFor } from '../../domain/reminders.js';
 import { getTemplateBody, manualRowsForInvoice, dispatchReminder } from '../../actions/reminders.js';
 import { getSettingsMap } from '../../actions/settings.js';
 import { openWhatsApp } from '../../lib/whatsapp.js';
@@ -69,9 +69,11 @@ export function PaymentEntry() {
   }
 
   async function onShareReceipt() {
-    const body = await getTemplateBody('receipt');
+    const settingsMap = await getSettingsMap();
+    const language = languageFor(student, settingsMap.message_language);
+    const body = await getTemplateBody(templateIdFor('receipt', language));
     const message = composeMessage(body, {
-      parent_name: (student.father_name || student.mother_name || '').split(' ')[0],
+      parent_name: parentNameFor(student.father_name || student.mother_name, student, language),
       receipt_no: done.receipt_no,
       student_name: student.name,
       class: student.class_name,
@@ -79,9 +81,9 @@ export function PaymentEntry() {
       amount: amountNum.toLocaleString('en-IN'),
       mode,
       paid_on: formatDateHuman(todayISO()),
-      operator_name: operator?.name || ''
+      operator_name: operator?.name || '',
+      operator_phone: operator?.phone || ''
     });
-    const settingsMap = await getSettingsMap();
     openWhatsApp(student.father_phone || student.mother_phone, message, settingsMap.country_code || '91');
   }
 

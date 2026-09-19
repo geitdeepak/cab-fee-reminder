@@ -54,7 +54,8 @@ const ALIASES = {
   old_dues: ['olddues', 'pending', 'balance', 'dues', 'previousdues', 'arrears', 'pendingamount'],
   blood_group: ['bloodgroup', 'blood'],
   allergies: ['allergy', 'allergies'],
-  notes: ['notes', 'note', 'remarks']
+  notes: ['notes', 'note', 'remarks'],
+  message_language: ['language', 'lang', 'messagelanguage', 'bhasha']
 };
 
 function norm(s) {
@@ -84,6 +85,6 @@ export function toRecords(rows) {
 }
 
 export const TEMPLATE_CSV =
-  'name,class,father_name,father_phone,mother_name,mother_phone,pickup,fare,plan,due_day,paid,old_dues,school\n' +
-  'Aarav Sharma,IV,Rajesh Sharma,9876543210,Sunita Sharma,9811223344,Alpha-1 Main Gate,1600,monthly,5,yes,0,DPS\n' +
-  'Diya Verma,VII,Manoj Verma,9900112233,,,Beta-2 Market,1800,quarterly,5,no,1800,St Xavier\n';
+  'name,class,father_name,father_phone,mother_name,mother_phone,pickup,fare,plan,due_day,paid,old_dues,school,language\n' +
+  'Aarav Sharma,IV,Rajesh Sharma,9876543210,Sunita Sharma,9811223344,Alpha-1 Main Gate,1600,monthly,5,yes,0,DPS,hinglish\n' +
+  'Diya Verma,VII,Manoj Verma,9900112233,,,Beta-2 Market,1800,quarterly,5,no,1800,St Xavier,english\n';
