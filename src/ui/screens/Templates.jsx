@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
 import { saveTemplate } from '../../actions/reminders.js';
+import { setSetting } from '../../actions/settings.js';
+import { useSettingsMap } from '../../state/hooks.js';
 import { validateTemplate, composeMessage, KNOWN_PLACEHOLDERS } from '../../domain/reminders.js';
 import { TopBar } from '../components/TopBar.jsx';
 
@@ -18,6 +20,8 @@ const SAMPLE_DATA = {
 export function Templates() {
   const { toast, t } = useUi();
   const templates = useLiveQuery(() => db.templates.toArray(), [], []);
+  const settingsMap = useSettingsMap();
+  const sendingLang = settingsMap?.message_language === 'english' ? 'english' : 'hinglish';
   const [activeId, setActiveId] = useState('advance');
   const [body, setBody] = useState('');
 
@@ -59,6 +63,24 @@ export function Templates() {
             <button class={lang === 'hinglish' ? 'active' : ''} onClick={() => switchLanguage('hinglish')}>Hinglish</button>
             <button class={lang === 'english' ? 'active' : ''} onClick={() => switchLanguage('english')}>English</button>
           </div>
+        </div>
+        <div style="padding:10px 14px 12px;background:var(--color-neutral-100);display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12.5px;line-height:1.5;font-weight:700">
+            {t('sendingInNow')} <span class="tag">{sendingLang === 'english' ? 'English' : 'Hinglish'}</span>
+          </div>
+          {lang !== sendingLang && (
+            <button
+              class="btn btn-accent"
+              style="align-self:flex-start"
+              onClick={async () => {
+                await setSetting('message_language', lang);
+                toast(t('sendingInChanged'));
+              }}
+            >
+              {lang === 'english' ? t('sendInEnglish') : t('sendInHinglish')}
+            </button>
+          )}
+          <div style="font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)">{t('sendingInHelp')}</div>
         </div>
         <div style="display:flex;overflow-x:auto;border-bottom:2px solid var(--color-text);background:var(--color-neutral-100)">
           {visible.map((tp) => (

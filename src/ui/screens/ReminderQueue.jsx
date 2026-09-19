@@ -89,7 +89,9 @@ export function ReminderQueue() {
               <div key={row.key} class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:9px">
                 <div style="display:flex;gap:10px;align-items:flex-start">
                   <div style="flex:1;min-width:0">
-                    <div style="font-weight:800;font-size:16px">{row.student_name}</div>
+                    <div style="font-weight:800;font-size:16px">
+                      {row.student_name} <span class="tag" style="vertical-align:middle;margin-left:4px">{row.language === 'english' ? 'English' : 'Hinglish'}</span>
+                    </div>
                     <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:2px">
                       {row.class_name} · {row.pickup_point_name}
                     </div>
@@ -131,7 +133,7 @@ export function ReminderQueue() {
                   </div>
                   <div style="padding:14px">
                     <div style="font-weight:800;font-size:24px">{current.student_name}</div>
-                    <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:3px">{current.class_name} · {current.pickup_point_name}</div>
+                    <div style="font-size:12.5px;color:var(--color-neutral-700);margin-top:3px">{current.class_name} · {current.pickup_point_name} · {row_language(current)}</div>
                     <div style="display:flex;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--color-neutral-300)">
                       <div style="flex:1">
                         <div class="stat-label">{t('amount')}</div>
@@ -201,6 +203,8 @@ export function ReminderQueue() {
     </div>
   );
 }
+
+const row_language = (r) => (r.language === 'english' ? 'English' : 'Hinglish');
 
 function MessagePreview({ row, attachQr }) {
   const [text, setText] = useState('');
