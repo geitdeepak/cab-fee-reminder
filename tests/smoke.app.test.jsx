@@ -12,6 +12,7 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect } from 'vitest';
 import { render } from 'preact';
 import { App } from '../src/app.jsx';
+import { db } from '../src/db/index.js';
 
 function flush(ms = 0) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -24,7 +25,7 @@ async function waitFor(check, { timeout = 10000, interval = 15 } = {}) {
     if (result) return result;
     await flush(interval);
   }
-  throw new Error('waitFor: condition never became true');
+  throw new Error('waitFor: condition never became true: ' + check.toString().replace(/\s+/g, ' ').slice(0, 160));
 }
 
 function clickByText(container, selector, text) {
@@ -68,7 +69,9 @@ describe('App mount smoke test', () => {
 
     // --- Set MPIN 1234, confirm it, and unlock into the app ---
     await tapKeypad(container, ['1', '2', '3', '4']);
-    await flush(700); // 150ms auto-submit delay + step transition to "confirm"
+    // Wait for the "confirm" step to actually show (the PIN clears and the hint changes)
+    // instead of guessing a delay — keys tapped while the first PIN is still submitting are ignored.
+    await waitFor(() => container.textContent.includes('MPIN dobara daaliye') && container.querySelectorAll('.pin-dot.filled').length === 0);
     await tapKeypad(container, ['1', '2', '3', '4']);
 
     await waitFor(() => container.querySelector('.bottom-nav'));
@@ -79,5 +82,23 @@ describe('App mount smoke test', () => {
     expect(html).toContain('Aaj ka hisaab'); // t('dashboard') in Hinglish
     expect(html).toContain('₹0'); // outstanding/collected tiles render ₹0, not "NaN" or a thrown error
     expect(container.querySelectorAll('.nav-btn').length).toBe(5);
+
+    // --- Viewing the English messages must not silently change what is sent (the bug a
+    // driver hit): the Message screen says which language is being sent and lets them change it.
+    [...container.querySelectorAll('.nav-btn')].find((b) => b.textContent.includes('Aur')).click(); // glyph + label
+    await waitFor(() => container.querySelector('.list-row'));
+    const messageRow = [...container.querySelectorAll('.list-row')].find((r) => r.textContent.includes('Message'));
+    messageRow.click();
+    await waitFor(() => container.querySelector('.main-scroll .lang-toggle'));
+    const inScreen = (text) => [...container.querySelectorAll('.main-scroll .lang-toggle button')].find((b) => b.textContent === text);
+
+    expect(container.querySelector('.main-scroll').textContent).toContain('Hinglish'); // still being sent
+    inScreen('English').click();
+    await waitFor(() => [...container.querySelectorAll('.main-scroll button')].some((b) => b.textContent === 'Reminder English mein bhejiye'));
+    expect((await db.settings.get('message_language')).value).toBe('hinglish'); // viewing alone changed nothing
+
+    clickByText(container, '.main-scroll button', 'Reminder English mein bhejiye');
+    await waitFor(() => ![...container.querySelectorAll('.main-scroll button')].some((b) => b.textContent === 'Reminder English mein bhejiye'));
+    expect((await db.settings.get('message_language')).value).toBe('english');
   }, 30000);
 });

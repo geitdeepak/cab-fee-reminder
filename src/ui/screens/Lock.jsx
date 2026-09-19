@@ -27,8 +27,9 @@ export function Lock() {
     return () => clearInterval(timer);
   }, [lockLeft > 0]);
 
+  // Only the message is cleared here. The digits are cleared explicitly when the step changes;
+  // clearing them in this (delayed) effect could wipe a digit the driver had already tapped.
   useEffect(() => {
-    setPin('');
     setError('');
   }, [step, isSetup]);
 
@@ -142,25 +143,26 @@ export function Lock() {
         <div style="height:2px;background:var(--color-accent);margin:18px 0 14px;width:64px" />
         <div style="font-size:14px;line-height:1.5;color:var(--color-neutral-300);max-width:280px">{hint}</div>
       </div>
-      <div>
-        <div class={`pin-dots${shake ? ' shake' : ''}`} style="margin-bottom:14px">
+      <div class="pin-area">
+        <div class={`pin-dots${shake ? ' shake' : ''}`} aria-label={`${pin.length} of 4 digits entered`}>
           {dots.map((i) => (
             <div key={i} class={`pin-dot${pin.length > i ? ' filled' : ''}`} />
           ))}
         </div>
-        {(lockLeft > 0 || error) && (
-          <div style="font-size:13px;font-weight:700;color:var(--color-accent-200);margin-bottom:12px">
-            {lockLeft > 0 ? `${t('lockedWait')} ${lockLeft}s` : error}
-          </div>
-        )}
+        <div class="pin-msg" role="status">{lockLeft > 0 ? `${t('lockedWait')} ${lockLeft}s` : error}</div>
         <div class="keypad" style={lockLeft > 0 ? 'opacity:.35;pointer-events:none' : ''}>
           {KEYS.map((k) => (
-            <button key={k} onClick={() => tapDigit(k)}>
+            <button
+              key={k}
+              class={k === 'del' ? 'key-del' : k === 'ok' ? 'key-ok' : ''}
+              aria-label={k === 'del' ? 'Delete' : k === 'ok' ? 'Enter' : undefined}
+              onClick={() => tapDigit(k)}
+            >
               {k === 'del' ? '⌫' : k === 'ok' ? '→' : k}
             </button>
           ))}
         </div>
-        {!isSetup && <div style="font-size:11px;color:var(--color-neutral-400);margin-top:14px;line-height:1.5">{t('lockFoot')}</div>}
+        {!isSetup && <div class="pin-foot">{t('lockFoot')}</div>}
       </div>
     </div>
   );

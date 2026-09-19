@@ -235,14 +235,49 @@ a { color: var(--color-accent-700); }
 }
 .update-bar button { border: 2px solid #fff; background: transparent; color: #fff; padding: 6px 10px; min-height: 34px; font-weight: 800; }
 
-.pin-dots { display: flex; gap: 12px; }
-.pin-dot { flex: 1; height: 6px; background: var(--color-neutral-300); }
-.pin-dot.filled { background: var(--color-accent); }
+.pin-area { display: flex; flex-direction: column; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+
+/* The four PIN dots: round, well clear of the keypad, and they fill as digits go in. */
+.pin-dots { display: flex; justify-content: center; gap: 20px; margin: 4px 0 0; }
+.pin-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid var(--color-neutral-400); background: transparent;
+  transition: background .12s ease, border-color .12s ease, transform .12s ease;
+}
+.pin-dot.filled { background: var(--color-accent); border-color: var(--color-accent); transform: scale(1.12); }
 @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
 .shake { animation: shake 0.4s; }
 
-.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; background: var(--color-neutral-700); border: 2px solid var(--color-neutral-600); }
-.keypad button { height: 58px; border: 0; background: var(--color-text); color: #fff; font-weight: 700; font-size: 22px; }
+/* A fixed-height message line so an error appearing never shoves the keypad down. */
+.pin-msg {
+  min-height: 22px; margin: 18px 0 22px; text-align: center;
+  font-size: 13px; font-weight: 700; color: var(--color-accent-200);
+}
+
+.keypad {
+  display: grid; grid-template-columns: repeat(3, 72px); gap: 16px 24px; justify-content: center;
+}
+.keypad button {
+  width: 72px; height: 72px; min-height: 0; padding: 0; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.22); background: rgba(255, 255, 255, 0.07);
+  color: #fff; font-weight: 700; font-size: 26px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s ease, transform .1s ease;
+}
+.keypad button:active { background: rgba(255, 255, 255, 0.24); transform: scale(0.94); }
+.keypad button.key-del { border-color: transparent; background: transparent; font-size: 24px; color: var(--color-neutral-300); }
+.keypad button.key-ok { border-color: var(--color-accent); background: var(--color-accent); font-size: 26px; }
+.keypad button.key-ok:active { background: var(--color-accent-600); }
+
+.pin-foot { margin-top: 26px; max-width: 300px; text-align: center; font-size: 11px; line-height: 1.5; color: var(--color-neutral-400); }
+
+/* Short phones: keep the whole keypad on screen. */
+@media (max-height: 700px) {
+  .keypad { gap: 10px 20px; grid-template-columns: repeat(3, 60px); }
+  .keypad button { width: 60px; height: 60px; font-size: 22px; }
+  .pin-msg { margin: 10px 0 14px; }
+  .pin-foot { margin-top: 14px; }
+}
 
 .scr::-webkit-scrollbar { width: 0; }
 
