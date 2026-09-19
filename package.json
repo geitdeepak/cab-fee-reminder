@@ -1,0 +1,28 @@
+{
+  "name": "cab-fee-reminder",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Offline PWA for a school-cab operator: student register, pickup-point fares, invoices, payments, and WhatsApp click-to-chat fee reminders. All data stays on the device.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "dexie": "^4.0.8",
+    "dexie-react-hooks": "^1.1.7",
+    "preact": "^10.24.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.0",
+    "fake-indexeddb": "^6.0.0",
+    "happy-dom": "^20.14.5",
+    "vite": "^5.4.0",
+    "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^2.1.0"
+  }
+}
