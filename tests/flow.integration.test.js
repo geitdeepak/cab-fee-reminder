@@ -192,9 +192,11 @@ describe('existing students: opening status, re-enrolment, import, send-now', ()
     expect(logs.filter((l) => l.recipient_type === rows[0].recipient_type && l.stage === rows[0].stage)).toHaveLength(1);
   });
 
-  it('ships the polished parent template and drops the UPI line when none is set', async () => {
+  it('ships the polished parent template with every way to pay', async () => {
     const t = await db.templates.get('overdue');
-    expect(t.body).toContain('UPI: {upi_id}');
+    expect(t.body).toContain('UPI ID: {upi_id}');
+    expect(t.body).toContain('Mobile number: {operator_phone}');
+    expect(t.body).toContain('{qr_note}');
     expect(t.body).toContain('screenshot');
   });
 });
@@ -215,15 +217,18 @@ describe('cancelling a bill', () => {
 });
 
 describe('upgrading an existing phone', () => {
-  it('replaces untouched previous-wording templates with the payment-link ones, but never an edited template', async () => {
+  it('replaces untouched earlier-wording templates with the new payment block, but never an edited template', async () => {
     const { seedIfEmpty, SEEDED_TEMPLATES } = await import('../src/db/seed.js');
     const seeded = (id) => SEEDED_TEMPLATES.find((t) => t.id === id).body;
+    const block = '{qr_note}\nUPI ID: {upi_id}\nMobile number: {operator_phone}\nPayment link: {pay_link}\n';
 
-    await db.templates.update('due', { body: seeded('due').replace('Payment link: {pay_link}\n', '') }); // previous wording
+    await db.templates.update('due', { body: seeded('due').replace(block, 'UPI: {upi_id}\n') }); // release with the UPI line only
+    await db.templates.update('overdue', { body: seeded('overdue').replace(block, 'Payment link: {pay_link}\nUPI: {upi_id}\n') }); // previous release
     await db.templates.update('final', { body: 'My own wording {student_name}' }); // driver's edit
     await seedIfEmpty(db);
 
-    expect((await db.templates.get('due')).body).toContain('{pay_link}');
+    expect((await db.templates.get('due')).body).toBe(seeded('due'));
+    expect((await db.templates.get('overdue')).body).toBe(seeded('overdue'));
     expect((await db.templates.get('final')).body).toBe('My own wording {student_name}');
     await db.templates.update('final', { body: seeded('final') });
   });

@@ -62,13 +62,14 @@ describe('the link inside a reminder message', () => {
     expect(new URL(r.data_map.pay_link).searchParams.get('am')).toBe('1000'); // 1600 - 600 already paid
     const text = composeMessage(body, r.data_map);
     expect(text).toContain('Payment link: https://cabfee.example.dev/pay?pa=ramesh%40upi');
-    expect(text).toContain('UPI: ramesh@upi');
+    expect(text).toContain('UPI ID: ramesh@upi');
+    expect(text).toContain('Mobile number: 9812345678');
   });
 
   it('leaves out the link and UPI lines when the driver has not set a UPI id', () => {
     const text = composeMessage(body, row({ name: 'Ramesh', phone: '9812345678' }).data_map);
     expect(text).not.toContain('Payment link');
-    expect(text).not.toContain('UPI:');
+    expect(text).not.toContain('UPI ID');
     expect(text).not.toMatch(/\n{3,}/);
   });
 });
@@ -82,5 +83,28 @@ describe('QR drawing', () => {
     expect(a.size).toBeGreaterThan(21);
     expect(a.path.startsWith('M3 3') || a.path.includes('M3 3')).toBe(true); // finder pattern sits after the 3-module margin
     expect(a.path).not.toBe(b.path);
+  });
+});
+
+describe('the payment block: QR note and mobile number', () => {
+  const body = SEEDED_TEMPLATES.find((t) => t.id === 'due').body;
+  const data = { parent_name: 'Rajesh', student_name: 'Aarav', class: 'IV', period: 'May 2026', amount: '1,600',
+    operator_name: 'Ramesh', operator_phone: '9812345678', upi_id: 'ramesh@upi', pay_link: 'https://x.dev/pay?pa=ramesh%40upi' };
+
+  it('says a QR is attached only when one really is', () => {
+    expect(composeMessage(body, { ...data, qr_note: 'QR code is message ke saath attached hai.' })).toContain('attached hai');
+    expect(composeMessage(body, { ...data, qr_note: '' })).not.toContain('attached');
+  });
+
+  it('offers every way to pay in one tidy block', () => {
+    const text = composeMessage(body, { ...data, qr_note: '' });
+    const block = text.slice(text.indexOf('UPI ID'), text.indexOf('Agar payment'));
+    expect(block).toBe('UPI ID: ramesh@upi\nMobile number: 9812345678\nPayment link: https://x.dev/pay?pa=ramesh%40upi\n\n');
+  });
+
+  it('drops the mobile-number line, and the signature line, when the driver has no phone saved', () => {
+    const text = composeMessage(body, { ...data, operator_phone: '', qr_note: '' });
+    expect(text).not.toContain('Mobile number');
+    expect(text.trim().endsWith('Ramesh')).toBe(true);
   });
 });

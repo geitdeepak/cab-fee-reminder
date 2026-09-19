@@ -29,10 +29,11 @@ export function ReminderQueue() {
   // Once every message of a filtered stage is sent, fall back to showing everything.
   const activeFilter = stageFilter !== 'all' && !allRows.some((r) => r.stage === stageFilter) ? 'all' : stageFilter;
   const rows = activeFilter === 'all' ? allRows : allRows.filter((r) => r.stage === activeFilter);
-  const qrOn = !!settingsMap?.payment_qr && settingsMap.attach_qr !== false;
+  const hasQr = !!settingsMap?.payment_qr;
+  const qrOn = hasQr && settingsMap.attach_qr !== false;
 
-  async function onSend(row) {
-    const res = await dispatchReminder(row);
+  async function onSend(row, opts) {
+    const res = await dispatchReminder(row, opts);
     if (res.outcome !== 'cancelled') toast(t('openWhatsApp') + ' ✓');
   }
   async function onSkip(row) {
@@ -106,6 +107,11 @@ export function ReminderQueue() {
                   <button class="btn btn-ghost" onClick={() => onSkip(row)}>{t('skip')}</button>
                   <button class="btn btn-accent" style="padding:9px 13px" onClick={() => onSend(row)}>{t('send')}</button>
                 </div>
+                {hasQr && (
+                  <button class="btn btn-ghost" style="align-self:flex-start" onClick={() => onSend(row, { withQr: !qrOn })}>
+                    {qrOn ? t('sendWithoutQr') : t('sendWithQr')}
+                  </button>
+                )}
               </div>
             ))}
 
@@ -140,7 +146,7 @@ export function ReminderQueue() {
                   </div>
                   <div style="padding:12px 14px;border-top:2px solid var(--color-text);background:var(--color-neutral-200)">
                     <div class="stat-label" style="margin-bottom:6px">{t('messagePreview')}</div>
-                    <MessagePreview key={current.key} row={current} />
+                    <MessagePreview key={current.key + qrOn} row={current} attachQr={qrOn} />
                   </div>
                   <div style="display:flex;gap:8px;padding:12px 14px;border-top:2px solid var(--color-text)">
                     <button class="btn btn-secondary" onClick={() => onSkip(current)}>{t('skip')}</button>
@@ -152,6 +158,13 @@ export function ReminderQueue() {
                       {t('openWhatsApp')}
                     </button>
                   </div>
+                  {hasQr && (
+                    <div style="padding:0 14px 12px">
+                      <button class="btn btn-secondary btn-block" onClick={() => onSend(current, { withQr: !qrOn })}>
+                        {qrOn ? t('sendWithoutQr') : t('sendWithQr')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div class="card" style="padding:26px 16px">
@@ -189,11 +202,11 @@ export function ReminderQueue() {
   );
 }
 
-function MessagePreview({ row }) {
+function MessagePreview({ row, attachQr }) {
   const [text, setText] = useState('');
   useEffect(() => {
     let cancelled = false;
-    composeForRow(row).then((msg) => {
+    composeForRow(row, { attachQr }).then((msg) => {
       if (!cancelled) setText(msg);
     });
     return () => { cancelled = true; };

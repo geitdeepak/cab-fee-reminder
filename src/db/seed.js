@@ -21,8 +21,10 @@ export const SEEDED_TEMPLATES = [
       'Due date : *{due_date}*\n' +
       'Pickup   : {pickup_point}\n\n' +
       'Kripya due date tak payment kar dijiyega.\n' +
-      'Payment link: {pay_link}\n' +
-      'UPI: {upi_id}\n\n' +
+      '{qr_note}\n' +
+      'UPI ID: {upi_id}\n' +
+      'Mobile number: {operator_phone}\n' +
+      'Payment link: {pay_link}\n\n' +
       'Payment hone par receipt bhej diya jayega. Agar payment ho chuka hai to please bata dijiye.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
@@ -37,8 +39,10 @@ export const SEEDED_TEMPLATES = [
       'Period : {period}\n' +
       'Amount : *Rs. {amount}*\n\n' +
       'Kripya aaj hi payment kar dijiye.\n' +
-      'Payment link: {pay_link}\n' +
-      'UPI: {upi_id}\n\n' +
+      '{qr_note}\n' +
+      'UPI ID: {upi_id}\n' +
+      'Mobile number: {operator_phone}\n' +
+      'Payment link: {pay_link}\n\n' +
       'Agar payment ho chuka hai to please mujhe bata dijiye, main record update kar lunga.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
@@ -54,8 +58,10 @@ export const SEEDED_TEMPLATES = [
       'Amount   : *Rs. {amount}*\n' +
       'Due date : {due_date}\n\n' +
       'Kripya jaldi payment kar dijiye.\n' +
-      'Payment link: {pay_link}\n' +
-      'UPI: {upi_id}\n\n' +
+      '{qr_note}\n' +
+      'UPI ID: {upi_id}\n' +
+      'Mobile number: {operator_phone}\n' +
+      'Payment link: {pay_link}\n\n' +
       'Agar aap payment kar chuke hain to screenshot bhej dijiye, main record theek kar dunga. ' +
       'Koi dikkat ho to mujhe call kar lijiye, hum baat karke hal nikal lenge.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
@@ -73,8 +79,10 @@ export const SEEDED_TEMPLATES = [
       'Due date : {due_date}\n\n' +
       'Payment clear na hone par mujhe cab service temporarily rokni pad sakti hai, jo hum nahi chahte. ' +
       'Kripya aaj hi payment kar dijiye ya mujhe call karke bata dijiye.\n' +
-      'Payment link: {pay_link}\n' +
-      'UPI: {upi_id}\n\n' +
+      '{qr_note}\n' +
+      'UPI ID: {upi_id}\n' +
+      'Mobile number: {operator_phone}\n' +
+      'Payment link: {pay_link}\n\n' +
       'Agar payment ho chuka hai to please mujhe turant bata dijiye.\n\n' +
       'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
@@ -161,9 +169,11 @@ export async function seedIfEmpty(db) {
         // Upgrade only templates the driver never touched.
         for (const seeded of SEEDED_TEMPLATES) {
           const stored = await db.templates.get(seeded.id);
-          // v1 = first release; v2 = the previous wording, which is today's text minus the link line.
-          const v2 = seeded.body.replace('Payment link: {pay_link}\n', '');
-          if (stored && (stored.body === LEGACY_V1[seeded.id] || stored.body === v2)) {
+          // Wordings an untouched template may still have: v1 first release, v2 UPI line only, v3 link + UPI line.
+          const block = '{qr_note}\nUPI ID: {upi_id}\nMobile number: {operator_phone}\nPayment link: {pay_link}\n';
+          const v3 = seeded.body.replace(block, 'Payment link: {pay_link}\nUPI: {upi_id}\n'); // previous release
+          const v2 = seeded.body.replace(block, 'UPI: {upi_id}\n'); // release before that
+          if (stored && [LEGACY_V1[seeded.id], v2, v3].includes(stored.body)) {
             await db.templates.update(seeded.id, { body: seeded.body });
           }
         }

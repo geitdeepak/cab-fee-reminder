@@ -20,6 +20,7 @@ export const KNOWN_PLACEHOLDERS = [
   'operator_phone',
   'upi_id',
   'pay_link',
+  'qr_note',
   // receipt-only
   'receipt_no',
   'mode',
@@ -33,8 +34,8 @@ export function validateTemplate(body) {
 }
 
 // A line that mentions one of these is dropped entirely when the value is empty,
-// so a driver with no UPI id never sends a dangling "UPI: " or "Payment link: " line.
-const OPTIONAL_LINE_KEYS = ['upi_id', 'pay_link'];
+// so a driver with no UPI id (or no phone, or no QR attached) never sends a dangling label.
+const OPTIONAL_LINE_KEYS = ['upi_id', 'pay_link', 'qr_note', 'operator_phone'];
 
 export function composeMessage(body, dataMap) {
   const value = (key) => (dataMap[key] !== undefined && dataMap[key] !== null ? String(dataMap[key]) : '');

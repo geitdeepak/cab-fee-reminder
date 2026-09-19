@@ -68,9 +68,11 @@ OD-10 Hinglish default with English toggle.
   There is deliberately no "open my UPI app" button: tested on a real phone, PhonePe and Google Pay both
   open pre-filled and then decline the payment "for security reasons" (UPI apps block payments started
   from a web link to a personal UPI id). Not yet tested: paying by scanning the on-page QR.
-- Payment QR (optional, off by default): upload once in Settings and switch on "send the QR with every
-  reminder". WhatsApp cannot pre-fill a recipient when an image is attached, so the driver picks the
-  chat from the share sheet, which is slower than the pre-filled chat.
+- **Every way to pay in one message:** reminders carry `UPI ID`, the driver's `Mobile number`, the payment
+  link, and (when sent with the QR) a line saying a QR is attached. Lines whose value is missing are dropped.
+- **Payment QR:** upload once in Settings. Each reminder shows two buttons, plain "Send" (pre-filled chat) and
+  "Send with QR" (share sheet: image + message). WhatsApp cannot pre-fill a recipient when an image is
+  attached, so the driver picks the chat. "Send the QR with every reminder" makes the QR the default.
 
 ## Not implemented yet
 

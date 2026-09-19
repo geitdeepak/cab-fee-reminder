@@ -30,16 +30,20 @@
 ## 5. रिमाइंडर भेजना
 1. नीचे "Reminder" दबाइए।
 2. किसी parent के आगे **"Bhejiye"** दबाइए। WhatsApp में मैसेज लिखा हुआ खुल जाएगा।
-3. **WhatsApp के अंदर Send आपको खुद दबाना है** — ऐप उसे नहीं दबा सकता।
+3. **WhatsApp के अंदर Send आपको खुद दबाना है** — ऐप उसे नहीं दबा सकता। (QR भेजना हो तो "QR ke saath bhejiye" — सेक्शन 6 देखिए।)
 4. "Chhodiye" से किसी को छोड़ सकते हैं। नीचे "Aaj bheje gaye" में भेजे हुए दिखते हैं; भूल से गलत दबा तो **Undo**।
 
 रिमाइंडर सिर्फ़ तब दिखते हैं जब उनका समय आए: due date से 3 दिन पहले, due के दिन, और 5 व 15 दिन बाद। रात 8 से सुबह 8 बजे तक लिस्ट खाली रहती है।
 किसी बिल का रिमाइंडर अभी भेजना हो तो "Paisa" → बिल खोलिए → **"Reminder abhi bhejiye"**।
 
-## 6. अपना UPI ID (एक बार) — पेमेंट लिंक के लिए
-"Aur" → "Setting" → "Payment ki detail" में अपना **UPI ID** लिखिए (जैसे naam@bank)। इसके बाद हर रिमाइंडर में एक **"Payment link"** अपने-आप जुड़ जाएगा। माता-पिता उस लिंक को दबाएँगे तो एक पेज खुलेगा जिसमें **रकम, आपका UPI ID (copy बटन के साथ) और QR** दिखेगा; वे UPI ID copy करके अपने PhonePe / GPay / Paytm से पे कर सकते हैं। (कई ऐप लिंक से सीधे पेमेंट रोक देती हैं, इसलिए हमने copy और QR का तरीका रखा है।)
+## 6. पेमेंट के तरीके (एक बार सेट कीजिए)
+"Aur" → "Setting" में:
+- **"Aapka number"** — आपका मोबाइल नंबर। यह हर मैसेज में "Mobile number" के रूप में जाता है; माता-पिता इस पर भी पे कर सकते हैं (अगर आपका UPI इसी नंबर से जुड़ा हो)।
+- **"Payment ki detail" → "Aapka UPI ID"** (जैसे naam@bank)। यह मैसेज में "UPI ID" के रूप में जाता है, और साथ में एक **"Payment link"** भी, जिसे खोलने पर माता-पिता को रकम, UPI ID (copy बटन के साथ) और QR दिखता है।
+- **"Payment QR"** — अपने QR की फोटो (PhonePe/GPay का screenshot चलेगा) चुनिए। रिमाइंडर के साथ QR भेजने के लिए हर रिमाइंडर पर दो बटन दिखेंगे: **"Bhejiye"** (सीधे parent का चैट खुलता है, बिना फोटो) और **"QR ke saath bhejiye"** (WhatsApp की "share" लिस्ट खुलती है, वहाँ parent का चैट खुद चुनना पड़ता है)। चाहें तो "Har reminder ke saath QR bhejiye" चालू कर सकते हैं।
 - "Payment link check kijiye (₹1)" दबाकर देख लीजिए कि माता-पिता को क्या दिखेगा।
-- (ज़रूरी नहीं) चाहें तो अपने QR की फोटो भी डाल सकते हैं और "Har reminder ke saath QR bhejiye" चालू कर सकते हैं। पर तब WhatsApp की "share" लिस्ट खुलती है और parent का चैट खुद चुनना पड़ता है, इसलिए यह धीमा है।
+
+ध्यान रखिए: PhonePe और Google Pay लिंक से सीधे पेमेंट शुरू नहीं होने देते ("security reasons"), इसलिए पेमेंट का भरोसेमंद तरीका UPI ID / नंबर / QR ही है।
 
 ## 7. पैसा मिलने पर
 "Paisa" → बच्चे का बिल दबाइए → कितना मिला और Cash/UPI चुनिए → "Payment save kijiye"। फिर "Receipt WhatsApp par bhejiye" से रसीद भेज दीजिए। कम मिला हो तो वही रकम लिखिए, बाकी बकाया रहेगा।
@@ -90,16 +94,20 @@ More → Import from Excel/CSV. Use "Download a sample file", fill in your list 
 ## 5. Sending reminders
 1. Tap "Reminders" at the bottom.
 2. Tap **"Send"** next to a parent. WhatsApp opens with the message ready.
-3. **You must tap Send inside WhatsApp yourself** — the app cannot press it.
+3. **You must tap Send inside WhatsApp yourself** — the app cannot press it. (To include your QR, tap "Send with QR" — see section 6.)
 4. "Skip" leaves someone out. Sent ones are listed under "Sent today"; tap **Undo** if you sent one by mistake.
 
 Reminders appear only when their time comes: 3 days before the due date, on the due day, and 5 and 15 days after. Between 8 pm and 8 am the list stays empty.
 To remind about one bill right now: Money → open the bill → **"Send reminder now"**.
 
-## 6. Your UPI ID (once) — for the payment link
-More → Settings → Payment details: enter your **UPI ID** (like name@bank). After that every reminder automatically includes a **"Payment link"**. When the parent taps it, a page opens showing **the amount, your UPI ID (with a copy button) and a QR**; they copy the UPI ID and pay from their own PhonePe / GPay / Paytm. (Many apps block payments started straight from a link, which is why the copy and QR route is the main one.)
+## 6. Ways to pay (set up once)
+More → Settings:
+- **"Your phone number"** — your mobile number. It goes in every message as "Mobile number"; parents can pay to it too (if your UPI is linked to that number).
+- **"Payment details" → "Your UPI ID"** (like name@bank). It goes in the message as "UPI ID", together with a **"Payment link"** that shows the parent the amount, your UPI ID (with a copy button) and a QR.
+- **"Payment QR"** — choose your QR photo (a PhonePe/GPay screenshot works). Every reminder then shows two buttons: **"Send"** (opens the parent's chat directly, no photo) and **"Send with QR"** (WhatsApp's "share" list opens and you pick the parent's chat yourself). You can also switch on "Send the QR with every reminder".
 - Tap "Check the payment link (₹1)" to see exactly what a parent will see.
-- (Optional) You can also add your QR photo and turn on "Send the QR with every reminder". But then WhatsApp opens its "share" list and you must pick the parent's chat yourself, so it is slower.
+
+Note: PhonePe and Google Pay do not let a payment start straight from a link ("security reasons"), so the reliable ways to pay are the UPI ID, the mobile number and the QR.
 
 ## 7. When a parent pays
 Money → tap the child's bill → enter the amount and choose Cash/UPI → "Save payment". Then "Send receipt on WhatsApp". If they paid only part, enter that amount; the rest stays due.

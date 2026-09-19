@@ -62,9 +62,12 @@ export async function getTemplateBody(templateId) {
   return t ? t.body : '';
 }
 
-export async function composeForRow(row) {
+const QR_NOTE = 'QR code is message ke saath attached hai.';
+
+/** attachQr decides whether the message tells the parent a QR image is attached. */
+export async function composeForRow(row, { attachQr = false } = {}) {
   const body = await getTemplateBody(row.template_id);
-  return composeMessage(body, row.data_map);
+  return composeMessage(body, { ...row.data_map, qr_note: attachQr ? QR_NOTE : '' });
 }
 
 /** Writes the reminder_log row BEFORE opening WhatsApp (8.4, step 2) so the
@@ -73,7 +76,7 @@ export async function dispatchReminder(row, { withQr } = {}) {
   const settingsMap = await getSettingsMap();
   // Attach the driver's QR automatically whenever one is saved (unless switched off).
   const attachQr = !!settingsMap.payment_qr && (withQr ?? settingsMap.attach_qr !== false);
-  const message = await composeForRow(row);
+  const message = await composeForRow(row, { attachQr });
   const now = new Date().toISOString();
 
   // A hand-sent reminder may hit a stage that already has a log row (e.g. the

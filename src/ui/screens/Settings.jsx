@@ -75,6 +75,7 @@ export function Settings() {
             <div class="field">
               <label>{t('yourPhone')}</label>
               <input class="input" inputMode="numeric" value={phone} onInput={(e) => setPhone(e.currentTarget.value.replace(/\D/g, '').slice(0, 10))} onBlur={saveProfile} />
+              <div style="font-size:11.5px;color:var(--color-neutral-700)">{t('phoneHelp')}</div>
             </div>
           </div>
 
