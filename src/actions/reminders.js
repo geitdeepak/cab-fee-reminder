@@ -1,10 +1,19 @@
 // FR-07 (queue/dispatch), FR-08 (templates), Section 8 (WhatsApp dispatch).
 import { db } from '../db/index.js';
 import { uuid } from '../lib/id.js';
-import { buildReminderQueue, composeMessage, validateTemplate, isWithinQuietHours, STAGES } from '../domain/reminders.js';
+import {
+  buildReminderQueue,
+  composeMessage,
+  validateTemplate,
+  isWithinQuietHours,
+  buildRecipients,
+  makeReminderRow,
+  stageForManual,
+  STAGES
+} from '../domain/reminders.js';
 import { todayISO } from '../domain/dates.js';
 import { getSettingsMap, stageSettingsFromMap } from './settings.js';
-import { openWhatsApp, buildWaLink } from '../lib/whatsapp.js';
+import { openWhatsApp, buildWaLink, sharePaymentQr, downloadDataUrl } from '../lib/whatsapp.js';
 import { getOperator } from './auth.js';
 
 const STAGE_ORDER = { final: 0, overdue: 1, due: 2, advance: 3 };
@@ -36,7 +45,8 @@ export async function buildQueue() {
     loggedKeys,
     stageSettings: stageSettingsFromMap(settingsMap),
     today,
-    operator: operator || {}
+    operator: operator || {},
+    recipientMode: settingsMap.reminder_recipients || 'father'
   });
 
   rows.sort((a, b) => (STAGE_ORDER[a.stage] - STAGE_ORDER[b.stage]) || (b.days_overdue - a.days_overdue));
@@ -55,28 +65,77 @@ export async function composeForRow(row) {
 
 /** Writes the reminder_log row BEFORE opening WhatsApp (8.4, step 2) so the
  * intent survives the app being backgrounded, then hands off to wa.me. */
-export async function dispatchReminder(row) {
+export async function dispatchReminder(row, { withQr } = {}) {
   const settingsMap = await getSettingsMap();
+  // Attach the driver's QR automatically whenever one is saved (unless switched off).
+  const attachQr = !!settingsMap.payment_qr && (withQr ?? settingsMap.attach_qr !== false);
   const message = await composeForRow(row);
   const now = new Date().toISOString();
-  const id = uuid();
 
-  await db.reminder_log.add({
-    id,
-    invoice_id: row.invoice_id,
-    student_id: row.student_id,
-    recipient_type: row.recipient_type,
+  // A hand-sent reminder may hit a stage that already has a log row (e.g. the
+  // driver skipped it earlier); reuse that row instead of violating the unique index.
+  const existing = await db.reminder_log
+    .where('[invoice_id+recipient_type+stage]')
+    .equals([row.invoice_id, row.recipient_type, row.stage])
+    .first();
+  const fields = {
     phone: row.recipient_phone,
     template_id: row.template_id,
-    stage: row.stage,
     status: 'dispatched',
     skip_reason: null,
     message_text: message,
     dispatched_at: now
-  });
+  };
+  let id;
+  if (existing) {
+    id = existing.id;
+    await db.reminder_log.update(id, fields);
+  } else {
+    id = uuid();
+    await db.reminder_log.add({
+      id,
+      invoice_id: row.invoice_id,
+      student_id: row.student_id,
+      recipient_type: row.recipient_type,
+      stage: row.stage,
+      ...fields
+    });
+  }
+
+  if (attachQr) {
+    const result = await sharePaymentQr(settingsMap.payment_qr, message);
+    if (result === 'cancelled') {
+      // Nothing was sent: put the reminder back in the queue.
+      if (existing) await db.reminder_log.put(existing);
+      else await db.reminder_log.delete(id);
+      return { logId: id, message, outcome: 'cancelled' };
+    }
+    if (result === 'unsupported') {
+      // Desktop browsers cannot share files: save the QR and open the text chat.
+      downloadDataUrl(settingsMap.payment_qr, 'payment-qr.png');
+      openWhatsApp(row.recipient_phone, message, settingsMap.country_code);
+      return { logId: id, message, outcome: 'downloaded' };
+    }
+    return { logId: id, message, outcome: 'shared' };
+  }
 
   openWhatsApp(row.recipient_phone, message, settingsMap.country_code);
-  return { logId: id, message };
+  return { logId: id, message, outcome: 'opened' };
+}
+
+/** "Send reminder now": rows for one unpaid invoice using whichever template
+ * fits today, regardless of the automatic schedule. */
+export async function manualRowsForInvoice(invoiceId) {
+  const [invoice, settingsMap, operator] = await Promise.all([db.invoices.get(invoiceId), getSettingsMap(), getOperator()]);
+  if (!invoice || invoice.status === 'paid' || invoice.status === 'cancelled') return [];
+  const student = await db.students.get(invoice.student_id);
+  if (!student) return [];
+  const pickup = await db.pickup_points.get(student.pickup_point_id);
+  const today = todayISO();
+  const stage = stageForManual(invoice, today);
+  return buildRecipients(student, settingsMap.reminder_recipients || 'father').map((recipient) =>
+    makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator: operator || {} })
+  );
 }
 
 export async function previewLink(row) {

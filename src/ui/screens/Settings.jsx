@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import { imageFileToDataUrl } from '../../lib/image.js';
 import { useUi } from '../../state/ui.jsx';
 import { useOperator, useSettingsMap } from '../../state/hooks.js';
 import { saveOperatorProfile } from '../../actions/auth.js';
@@ -19,17 +20,36 @@ export function Settings() {
   const settingsMap = useSettingsMap();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [upi, setUpi] = useState('');
+  const qrRef = useRef(null);
 
   useEffect(() => {
     if (operator) {
       setName(operator.name || '');
       setPhone(operator.phone || '');
+      setUpi(operator.upi_id || '');
     }
-  }, [operator?.id, operator?.name, operator?.phone]);
+  }, [operator?.id, operator?.name, operator?.phone, operator?.upi_id]);
 
   async function saveProfile() {
-    await saveOperatorProfile({ name, phone, business_name: operator?.business_name || '', upi_id: operator?.upi_id || '' });
+    await saveOperatorProfile({ name, phone, business_name: operator?.business_name || '', upi_id: upi });
     toast('Saved ✓');
+  }
+
+  async function onQrFile(e) {
+    const file = e.currentTarget.files?.[0];
+    e.currentTarget.value = '';
+    if (!file) return;
+    try {
+      await setSetting('payment_qr', await imageFileToDataUrl(file));
+      toast('QR saved ✓');
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  async function removeQr() {
+    await setSetting('payment_qr', null);
   }
 
   if (!operator || !settingsMap) return <div style="min-height:100vh" />;
@@ -54,6 +74,48 @@ export function Settings() {
               <label>{t('yourPhone')}</label>
               <input class="input" inputMode="numeric" value={phone} onInput={(e) => setPhone(e.currentTarget.value.replace(/\D/g, '').slice(0, 10))} onBlur={saveProfile} />
             </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('paymentDetails')}</div>
+            <div class="field">
+              <label>{t('upiId')}</label>
+              <input class="input" value={upi} placeholder="name@bank" autocapitalize="off" onInput={(e) => setUpi(e.currentTarget.value.trim())} onBlur={saveProfile} />
+              <div style="font-size:11.5px;color:var(--color-neutral-700)">{t('upiHelp')}</div>
+            </div>
+            <div class="field">
+              <label>{t('paymentQr')}</label>
+              {settingsMap.payment_qr && (
+                <img src={settingsMap.payment_qr} alt="Payment QR" style="width:160px;height:160px;object-fit:contain;border:2px solid var(--color-text);background:#fff" />
+              )}
+              <input ref={qrRef} type="file" accept="image/*" style="display:none" onChange={onQrFile} />
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary" onClick={() => qrRef.current?.click()}>{settingsMap.payment_qr ? t('changeQr') : t('uploadQr')}</button>
+                {settingsMap.payment_qr && <button class="btn btn-danger" onClick={removeQr}>{t('remove')}</button>}
+              </div>
+              {settingsMap.payment_qr && (
+                <button
+                  onClick={() => setSetting('attach_qr', settingsMap.attach_qr === false)}
+                  style="width:100%;text-align:left;display:flex;gap:11px;align-items:center;padding:11px 0;border:0;border-top:1px solid var(--color-neutral-300);border-bottom:1px solid var(--color-neutral-300);background:transparent"
+                >
+                  <span style="flex:1;font-size:13px;font-weight:700">{t('attachQr')}</span>
+                  <Switch on={settingsMap.attach_qr !== false} />
+                </button>
+              )}
+              <div style="font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)">{t('qrHelp')}</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('reminderTo')}</div>
+            <div class="chip-row">
+              {[['father', t('father')], ['mother', t('mother')], ['both', t('both')]].map(([key, label]) => (
+                <button key={key} class={`chip${(settingsMap.reminder_recipients || 'father') === key ? ' active' : ''}`} onClick={() => setSetting('reminder_recipients', key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style="font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)">{t('reminderToHelp')}</div>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px">

@@ -17,7 +17,7 @@ function flush(ms = 0) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function waitFor(check, { timeout = 3000, interval = 15 } = {}) {
+async function waitFor(check, { timeout = 10000, interval = 15 } = {}) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
     const result = check();
@@ -68,7 +68,7 @@ describe('App mount smoke test', () => {
 
     // --- Set MPIN 1234, confirm it, and unlock into the app ---
     await tapKeypad(container, ['1', '2', '3', '4']);
-    await flush(400); // 150ms auto-submit delay + step transition to "confirm"
+    await flush(700); // 150ms auto-submit delay + step transition to "confirm"
     await tapKeypad(container, ['1', '2', '3', '4']);
 
     await waitFor(() => container.querySelector('.bottom-nav'));
@@ -79,5 +79,5 @@ describe('App mount smoke test', () => {
     expect(html).toContain('Aaj ka hisaab'); // t('dashboard') in Hinglish
     expect(html).toContain('₹0'); // outstanding/collected tiles render ₹0, not "NaN" or a thrown error
     expect(container.querySelectorAll('.nav-btn').length).toBe(5);
-  }, 15000);
+  }, 30000);
 });

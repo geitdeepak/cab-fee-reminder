@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, useEffect } from 'preact/hooks';
 import { useUi } from '../../state/ui.jsx';
+import { useSettingsMap } from '../../state/hooks.js';
 import { buildQueue, dispatchReminder, skipReminder, undoDispatch, getSentToday, composeForRow } from '../../actions/reminders.js';
 import { formatCurrency } from '../../lib/format.js';
 import { TopBar } from '../components/TopBar.jsx';
@@ -20,13 +21,19 @@ export function ReminderQueue() {
   const [mode, setMode] = useState('list');
   const [cardIdx, setCardIdx] = useState(0);
 
+  const [stageFilter, setStageFilter] = useState('all');
   const queueResult = useLiveQuery(() => buildQueue(), [], null);
   const sent = useLiveQuery(() => getSentToday(), [], []);
-  const rows = queueResult?.rows || [];
+  const settingsMap = useSettingsMap();
+  const allRows = queueResult?.rows || [];
+  // Once every message of a filtered stage is sent, fall back to showing everything.
+  const activeFilter = stageFilter !== 'all' && !allRows.some((r) => r.stage === stageFilter) ? 'all' : stageFilter;
+  const rows = activeFilter === 'all' ? allRows : allRows.filter((r) => r.stage === activeFilter);
+  const qrOn = !!settingsMap?.payment_qr && settingsMap.attach_qr !== false;
 
   async function onSend(row) {
-    await dispatchReminder(row);
-    toast(t('openWhatsApp') + ' ✓');
+    const res = await dispatchReminder(row);
+    if (res.outcome !== 'cancelled') toast(t('openWhatsApp') + ' ✓');
   }
   async function onSkip(row) {
     await skipReminder(row, '');
@@ -44,6 +51,22 @@ export function ReminderQueue() {
       <div class="main-scroll scr">
         <div class="screen-pad">
           {queueResult?.quiet && <div class="banner banner-amber">{t('quietHoursNote')}</div>}
+
+          {qrOn && <div class="banner banner-amber" style="font-size:12px">{t('qrPickChat')}</div>}
+
+          {!queueResult?.quiet && allRows.length > 0 && mode === 'list' && (
+            <div class="chip-scroll">
+              {[['all', t('all')], ['final', t('finalNotice')], ['overdue', t('overdue')], ['due', t('dueTodayStage')], ['advance', t('advance')]].map(([key, label]) => {
+                const count = key === 'all' ? allRows.length : allRows.filter((r) => r.stage === key).length;
+                if (key !== 'all' && count === 0) return null;
+                return (
+                  <button key={key} class={`chip${activeFilter === key ? ' active' : ''}`} onClick={() => setStageFilter(key)}>
+                    {label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {!queueResult?.quiet && rows.length > 0 && mode === 'list' && (
             <div class="card card-tight" style="display:flex;align-items:center;gap:10px">

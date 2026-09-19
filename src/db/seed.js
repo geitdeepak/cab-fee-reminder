@@ -4,6 +4,9 @@
 // points and fares; the app starts as a genuinely empty register.
 import { SCHEMA_VERSION } from './db.js';
 
+// Parent-facing wording. Plain "Rs." (not the rupee sign) because some older
+// Android fonts draw a box for it (SRS 8.3). A line containing {upi_id} is
+// dropped automatically when the driver has not entered a UPI id.
 export const SEEDED_TEMPLATES = [
   {
     id: 'advance',
@@ -11,13 +14,16 @@ export const SEEDED_TEMPLATES = [
     language: 'hinglish',
     active: true,
     body:
-      'Namaste {parent_name} ji,\n\n' +
-      '{student_name} ({class}) ki cab fee ki due date *{due_date}* hai.\n\n' +
-      'Period : {period}\n' +
-      'Amount : *Rs. {amount}*\n' +
-      'Pickup : {pickup_point}\n\n' +
-      'Time par payment kar dijiyega. Dhanyavaad.\n\n' +
-      '{operator_name}\n{operator_phone}'
+      'Namaste {parent_name} ji 🙏\n\n' +
+      '{student_name} ({class}) ki cab fee ka ek chhota sa reminder.\n\n' +
+      'Period   : {period}\n' +
+      'Amount   : *Rs. {amount}*\n' +
+      'Due date : *{due_date}*\n' +
+      'Pickup   : {pickup_point}\n\n' +
+      'Kripya due date tak payment kar dijiyega.\n' +
+      'UPI: {upi_id}\n\n' +
+      'Payment hone par receipt bhej diya jayega. Agar payment ho chuka hai to please bata dijiye.\n\n' +
+      'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
   {
     id: 'due',
@@ -25,12 +31,14 @@ export const SEEDED_TEMPLATES = [
     language: 'hinglish',
     active: true,
     body:
-      'Namaste {parent_name} ji,\n\n' +
+      'Namaste {parent_name} ji 🙏\n\n' +
       '{student_name} ({class}) ki cab fee *aaj due* hai.\n\n' +
       'Period : {period}\n' +
       'Amount : *Rs. {amount}*\n\n' +
-      'Aaj hi payment kar dijiye to badi meherbani hogi.\n\n' +
-      '{operator_name}\n{operator_phone}'
+      'Kripya aaj hi payment kar dijiye.\n' +
+      'UPI: {upi_id}\n\n' +
+      'Agar payment ho chuka hai to please mujhe bata dijiye, main record update kar lunga.\n\n' +
+      'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
   {
     id: 'overdue',
@@ -38,13 +46,16 @@ export const SEEDED_TEMPLATES = [
     language: 'hinglish',
     active: true,
     body:
-      'Namaste {parent_name} ji,\n\n' +
+      'Namaste {parent_name} ji 🙏\n\n' +
       '{student_name} ({class}) ki cab fee *{days_overdue} din* se pending hai.\n\n' +
-      'Period : {period}\n' +
-      'Amount : *Rs. {amount}*\n' +
-      'Due    : {due_date}\n\n' +
-      'Kripya jaldi clear kar dijiye. Koi problem ho to mujhe call kar lijiye.\n\n' +
-      '{operator_name}\n{operator_phone}'
+      'Period   : {period}\n' +
+      'Amount   : *Rs. {amount}*\n' +
+      'Due date : {due_date}\n\n' +
+      'Kripya jaldi payment kar dijiye.\n' +
+      'UPI: {upi_id}\n\n' +
+      'Agar aap payment kar chuke hain to screenshot bhej dijiye, main record theek kar dunga. ' +
+      'Koi dikkat ho to mujhe call kar lijiye, hum baat karke hal nikal lenge.\n\n' +
+      'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
   {
     id: 'final',
@@ -53,12 +64,15 @@ export const SEEDED_TEMPLATES = [
     active: true,
     body:
       'Namaste {parent_name} ji,\n\n' +
-      '{student_name} ki cab fee *{days_overdue} din* se pending hai.\n\n' +
-      'Amount : *Rs. {amount}*\n' +
-      'Due    : {due_date}\n\n' +
-      'Payment clear na hone par cab service temporarily rokni pad sakti hai. ' +
-      'Kripya aaj hi baat kar lijiye.\n\n' +
-      '{operator_name}\n{operator_phone}'
+      '{student_name} ({class}) ki cab fee *{days_overdue} din* se pending hai. ' +
+      'Pehle bhi reminder bheja tha.\n\n' +
+      'Amount   : *Rs. {amount}*\n' +
+      'Due date : {due_date}\n\n' +
+      'Payment clear na hone par mujhe cab service temporarily rokni pad sakti hai, jo hum nahi chahte. ' +
+      'Kripya aaj hi payment kar dijiye ya mujhe call karke bata dijiye.\n' +
+      'UPI: {upi_id}\n\n' +
+      'Agar payment ho chuka hai to please mujhe turant bata dijiye.\n\n' +
+      'Dhanyavaad 🙏\n{operator_name}\n{operator_phone}'
   },
   {
     id: 'receipt',
@@ -66,17 +80,32 @@ export const SEEDED_TEMPLATES = [
     language: 'hinglish',
     active: true,
     body:
-      'Namaste {parent_name} ji,\n\n' +
-      'Payment mil gaya hai. Dhanyavaad.\n\n' +
+      'Namaste {parent_name} ji 🙏\n\n' +
+      'Aapka payment mil gaya hai. Bahut dhanyavaad.\n\n' +
       'Receipt : {receipt_no}\n' +
       'Student : {student_name} ({class})\n' +
       'Period  : {period}\n' +
       'Amount  : *Rs. {amount}*\n' +
       'Mode    : {mode}\n' +
       'Date    : {paid_on}\n\n' +
-      '{operator_name}'
+      '{operator_name}\n{operator_phone}'
   }
 ];
+
+// The first-release wording. A stored template that still matches this exactly
+// was never edited by the driver, so it is safe to upgrade to the text above.
+const LEGACY_BODIES = {
+  advance:
+    'Namaste {parent_name} ji,\n\n{student_name} ({class}) ki cab fee ki due date *{due_date}* hai.\n\nPeriod : {period}\nAmount : *Rs. {amount}*\nPickup : {pickup_point}\n\nTime par payment kar dijiyega. Dhanyavaad.\n\n{operator_name}\n{operator_phone}',
+  due:
+    'Namaste {parent_name} ji,\n\n{student_name} ({class}) ki cab fee *aaj due* hai.\n\nPeriod : {period}\nAmount : *Rs. {amount}*\n\nAaj hi payment kar dijiye to badi meherbani hogi.\n\n{operator_name}\n{operator_phone}',
+  overdue:
+    'Namaste {parent_name} ji,\n\n{student_name} ({class}) ki cab fee *{days_overdue} din* se pending hai.\n\nPeriod : {period}\nAmount : *Rs. {amount}*\nDue    : {due_date}\n\nKripya jaldi clear kar dijiye. Koi problem ho to mujhe call kar lijiye.\n\n{operator_name}\n{operator_phone}',
+  final:
+    'Namaste {parent_name} ji,\n\n{student_name} ki cab fee *{days_overdue} din* se pending hai.\n\nAmount : *Rs. {amount}*\nDue    : {due_date}\n\nPayment clear na hone par cab service temporarily rokni pad sakti hai. Kripya aaj hi baat kar lijiye.\n\n{operator_name}\n{operator_phone}',
+  receipt:
+    'Namaste {parent_name} ji,\n\nPayment mil gaya hai. Dhanyavaad.\n\nReceipt : {receipt_no}\nStudent : {student_name} ({class})\nPeriod  : {period}\nAmount  : *Rs. {amount}*\nMode    : {mode}\nDate    : {paid_on}\n\n{operator_name}'
+};
 
 export const SEEDED_FEE_PLANS = [
   { id: 'monthly', label: 'Monthly', months: 1, discount_pct: 0, active: true },
@@ -98,6 +127,11 @@ export const DEFAULT_SETTINGS = {
   stage_due_offset: 0,
   stage_overdue_offset: 5,
   stage_final_offset: 15,
+  // 'father' | 'mother' | 'both'. One parent by default halves the taps for a
+  // driver with many students; falls back to the other parent if no number.
+  reminder_recipients: 'father',
+  payment_qr: null, // data URL of the driver's own UPI QR image
+  attach_qr: true, // send the QR with every reminder when one is saved
   quiet_hours_enabled: true,
   quiet_hours_start: 8,
   quiet_hours_end: 20,
@@ -119,6 +153,14 @@ export async function seedIfEmpty(db) {
       }
       if ((await db.templates.count()) === 0) {
         await db.templates.bulkAdd(SEEDED_TEMPLATES);
+      } else {
+        // Upgrade only templates the driver never touched.
+        for (const seeded of SEEDED_TEMPLATES) {
+          const stored = await db.templates.get(seeded.id);
+          if (stored && stored.body === LEGACY_BODIES[seeded.id]) {
+            await db.templates.update(seeded.id, { body: seeded.body });
+          }
+        }
       }
       const existingKeys = new Set((await db.settings.toCollection().primaryKeys()));
       const rows = Object.entries(DEFAULT_SETTINGS)

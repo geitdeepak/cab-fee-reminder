@@ -41,9 +41,30 @@ OD-3 due day 5, OD-4 all four escalation stages on, OD-5 reminders to both paren
 OD-8 UPI id stored but not yet in the seeded templates, OD-9 unpaid invoice stays payable,
 OD-10 Hinglish default with English toggle.
 
+## Entering an existing register
+
+- **Quick add** (Bachche → Naya bachcha): only name, class, pickup point and one parent number are
+  required. The fee section asks for plan, due day, bill-from date, whether this month is already
+  paid, and any old amount pending. "Save & add next" keeps the pickup point and fee choices.
+- **Import** (Aur → Excel/CSV, or the Students screen): choose a CSV or paste rows copied from Excel
+  or Google Sheets. Every row is checked first; bad rows and duplicates are skipped, the rest are added.
+  A sample file can be downloaded from the import screen.
+
+## Reminders
+
+- Only the latest reached stage is queued per bill and parent (no four messages at once).
+- Reminders go to one parent by default (Settings → Reminder kisko), falling back to the other parent.
+- "Send reminder now" on any unpaid bill sends today's message without waiting for the schedule.
+- Message wording lives in `src/db/seed.js`; templates the driver never edited are upgraded
+  automatically. A line containing `{upi_id}` is dropped when no UPI id is set.
+- Payment QR: upload once in Settings. With it saved, each reminder opens the phone's share sheet
+  with the QR image and the message (the driver picks the parent's chat, because WhatsApp cannot
+  pre-fill a recipient when an image is attached). Turn it off in Settings to get the pre-filled chat.
+
 ## Not implemented yet
 
-- Pause enrolment / re-price UI beyond re-saving an enrolment; fee-plan discount editor.
+- Pause enrolment; fee-plan discount editor; a screen to cancel a bill by hand.
+- Per-invoice UPI QR generated in the app (today the driver's own QR image is sent).
 - Backup 30-day full-screen interstitial and weekly launch prompt (banner escalation is done).
 - Biometric unlock, 60-second lockout after 10 wrong MPIN attempts.
 - Install-required onboarding gate (SRS 12.4), delete-permanently action, payment reversal UI.

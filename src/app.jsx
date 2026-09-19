@@ -20,6 +20,7 @@ import { Backup } from './ui/screens/Backup.jsx';
 import { Reports } from './ui/screens/Reports.jsx';
 import { Settings } from './ui/screens/Settings.jsx';
 import { More } from './ui/screens/More.jsx';
+import { ImportStudents } from './ui/screens/ImportStudents.jsx';
 
 const SCREENS = {
   dash: Dashboard,
@@ -35,7 +36,8 @@ const SCREENS = {
   backup: Backup,
   reports: Reports,
   settings: Settings,
-  more: More
+  more: More,
+  import: ImportStudents
 };
 
 function Router() {

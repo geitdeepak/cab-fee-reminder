@@ -6,6 +6,7 @@ export function More() {
   const { go, t } = useUi();
   const items = [
     { code: 'S-07', label: t('pickups'), sub: 'Fare master', screen: 'pickups' },
+    { code: 'NEW', label: t('importStudents'), sub: 'Excel / Google Sheets / CSV', screen: 'import' },
     { code: 'S-09', label: t('invoices'), sub: 'Outstanding and history', screen: 'invoices' },
     { code: 'S-11', label: t('templates'), sub: '5 messages · editable', screen: 'templates' },
     { code: 'S-13', label: t('reports'), sub: 'Collection, defaulters', screen: 'reports' },

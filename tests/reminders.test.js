@@ -115,6 +115,62 @@ describe('buildReminderQueue', () => {
     expect(rows).toHaveLength(0);
   });
 
+  it('queues only the latest reached stage, not every stage at once', () => {
+    const rows = buildReminderQueue({
+      invoices: [invoice],
+      studentsById: new Map([['stu-1', student()]]),
+      pickupPointsById,
+      loggedKeys: new Set(),
+      stageSettings,
+      today: '2026-05-25' // 20 days late: advance, due, overdue and final are all "reached"
+    });
+    expect(rows.map((r) => r.stage)).toEqual(['final', 'final']); // one per parent
+  });
+
+  it('moves on to the next stage once the earlier one was sent', () => {
+    const rows = buildReminderQueue({
+      invoices: [invoice],
+      studentsById: new Map([['stu-1', student()]]),
+      pickupPointsById,
+      loggedKeys: new Set(['inv-1|father|due', 'inv-1|mother|due']),
+      stageSettings,
+      today: '2026-05-11' // D+6: overdue reached
+    });
+    expect(rows.map((r) => r.stage)).toEqual(['overdue', 'overdue']);
+  });
+
+  it('father-only mode sends one row, falling back to the mother when there is no father number', () => {
+    const args = {
+      invoices: [invoice],
+      pickupPointsById,
+      loggedKeys: new Set(),
+      stageSettings,
+      today: '2026-05-05',
+      recipientMode: 'father'
+    };
+    const both = buildReminderQueue({ ...args, studentsById: new Map([['stu-1', student()]]) });
+    expect(both.map((r) => r.recipient_type)).toEqual(['father']);
+
+    const noFather = buildReminderQueue({
+      ...args,
+      studentsById: new Map([['stu-1', student({ father_phone: '', father_name: '' })]])
+    });
+    expect(noFather.map((r) => r.recipient_type)).toEqual(['mother']);
+  });
+
+  it('copes with blank parent names (quick-entry students)', () => {
+    const rows = buildReminderQueue({
+      invoices: [invoice],
+      studentsById: new Map([['stu-1', student({ father_name: '', mother_name: '' })]]),
+      pickupPointsById,
+      loggedKeys: new Set(),
+      stageSettings,
+      today: '2026-05-05'
+    });
+    expect(rows[0].data_map.parent_name).toBe('Aarav ke parent');
+    expect(rows[0].recipient_name).toBe('Aarav ke Papa');
+  });
+
   it('respects a disabled stage', () => {
     const rows = buildReminderQueue({
       invoices: [invoice],

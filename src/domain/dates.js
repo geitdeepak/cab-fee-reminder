@@ -66,6 +66,14 @@ export function dueDate(periodStart, dueDay) {
   return candidate;
 }
 
+/** Billing start for the "Bill from" chips: today, the 1st of this month, or of next. */
+export function billingStartDate(choice, today = todayISO()) {
+  const first = `${today.slice(0, 7)}-01`;
+  if (choice === 'today') return today;
+  if (choice === 'next') return addMonths(first, 1);
+  return first;
+}
+
 export function daysBetween(fromISO, toIso) {
   const { y: y1, m: m1, d: d1 } = parts(fromISO);
   const { y: y2, m: m2, d: d2 } = parts(toIso);

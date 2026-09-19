@@ -7,10 +7,11 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { ready, db } from '../src/db/index.js';
 import { savePickupPoint, removePickupPoint, countEnrolledAt } from '../src/actions/pickups.js';
 import { saveStudent } from '../src/actions/students.js';
-import { saveEnrolment, runInvoiceEngine, recordPayment, getActiveEnrolment } from '../src/actions/billing.js';
-import { buildQueue, dispatchReminder, skipReminder } from '../src/actions/reminders.js';
+import { saveEnrolment, saveEnrolmentWithOpening, runInvoiceEngine, recordPayment, getActiveEnrolment } from '../src/actions/billing.js';
+import { buildQueue, dispatchReminder, skipReminder, manualRowsForInvoice } from '../src/actions/reminders.js';
+import { previewImport, runImport } from '../src/actions/importStudents.js';
 import { setSetting } from '../src/actions/settings.js';
-import { addDays, todayISO } from '../src/domain/dates.js';
+import { addDays, todayISO, billingStartDate } from '../src/domain/dates.js';
 
 // window.open is called by dispatchReminder
 globalThis.window = globalThis.window || {};
@@ -22,6 +23,7 @@ let studentId;
 beforeAll(async () => {
   await ready();
   await setSetting('quiet_hours_enabled', false); // don't let wall-clock time affect the test
+  await setSetting('reminder_recipients', 'both');
   await db.operator.update('self', { name: 'Ramesh', phone: '9812345678' });
 });
 
@@ -104,5 +106,95 @@ describe('billing + reminder lifecycle', () => {
     const res = await removePickupPoint(pickupId);
     expect(res).toEqual({ removed: false, madeInactive: true });
     expect((await db.pickup_points.get(pickupId)).active).toBe(false);
+  });
+});
+
+describe('existing students: opening status, re-enrolment, import, send-now', () => {
+  let beta;
+  const quick = (name, phone) => ({
+    name, class_name: 'V', father_phone: phone, mother_phone: '', pickup_point_id: beta
+  });
+
+  beforeAll(async () => {
+    beta = await savePickupPoint({ name: 'Beta-2 Market', monthly_fare: 1800, active: true });
+  });
+
+  it('a quick-entry student needs only name, class, pickup and one parent number', async () => {
+    const id = await saveStudent(quick('Diya Verma', '9900112233'));
+    const s = await db.students.get(id);
+    expect(s.emergency_phone).toBe('9900112233'); // defaulted from the parent number
+    expect(s.father_name).toBe('');
+  });
+
+  it('"already paid" settles the current cycle without a payment row; old dues become one due-today bill', async () => {
+    const student = await db.students.where('name').equals('Diya Verma').first();
+    await saveEnrolmentWithOpening({
+      student_id: student.id, pickup_point_id: beta, fee_plan_id: 'monthly', due_day: 5,
+      start_date: billingStartDate('month'), thisMonthPaid: true, oldDues: 800
+    });
+    const invoices = await db.invoices.where('student_id').equals(student.id).toArray();
+    // (the engine's 15-day look-ahead may also have created next month's bill)
+    const current = invoices.find((i) => i.period_start === billingStartDate('month'));
+    const dues = invoices.find((i) => i.amount === 800);
+    expect(current).toMatchObject({ status: 'paid', paid_amount: 1800, opening: true });
+    expect(dues).toMatchObject({ status: 'pending', due_date: todayISO(), opening: true });
+    expect(await db.payments.where('invoice_id').equals(current.id).count()).toBe(0);
+
+    const { rows } = await buildQueue();
+    const mine = rows.filter((r) => r.student_id === student.id);
+    expect(mine.map((r) => [r.stage, r.amount])).toEqual([['due', 800]]); // paid cycle stays out of the queue
+    expect(mine.some((r) => r.invoice_id === current.id)).toBe(false);
+  });
+
+  it('re-enrolling replaces the untouched bill instead of leaving a duplicate', async () => {
+    const id = await saveStudent(quick('Kabir Nair', '9745012345'));
+    const args = { student_id: id, pickup_point_id: beta, fee_plan_id: 'monthly', start_date: billingStartDate('month') };
+    await saveEnrolmentWithOpening({ ...args, due_day: 5 });
+    await saveEnrolmentWithOpening({ ...args, due_day: 10 });
+    const thisCycle = (await db.invoices.where('student_id').equals(id).toArray()).filter((i) => i.period_start === billingStartDate('month'));
+    const live = thisCycle.filter((i) => i.status !== 'cancelled');
+    expect(thisCycle.length).toBeGreaterThanOrEqual(2); // the original (cancelled) and its replacement
+    expect(live).toHaveLength(1);
+    expect(live[0].due_date.slice(8)).toBe('10');
+  });
+
+  it('imports a sheet: creates new pickup points, skips bad rows and duplicates', async () => {
+    const text =
+      'name,class,father_phone,pickup,fare,paid,old_dues\n' +
+      'Anaya Singh,VI,9440556677,Gamma Park,2000,no,0\n' +
+      'Reyansh Yadav,XI,9388220011,Beta-2 Market,,yes,0\n' +
+      'Bad Row,IX,123,Beta-2 Market,,no,0\n' +
+      'Diya Verma,V,9900112233,Beta-2 Market,,no,0\n';
+    const plan = await previewImport(text);
+    expect(plan.ready).toHaveLength(2);
+    expect(plan.invalid).toHaveLength(1);
+    expect(plan.duplicates).toHaveLength(1);
+
+    const res = await runImport(plan);
+    expect(res).toEqual({ created: 2, failures: [] });
+    expect((await db.pickup_points.where('name').equals('Gamma Park').first()).monthly_fare).toBe(2000);
+    const reyansh = await db.students.where('name').equals('Reyansh Yadav').first();
+    const inv = (await db.invoices.where('student_id').equals(reyansh.id).toArray()).filter((i) => i.period_start === billingStartDate('month'));
+    expect(inv).toHaveLength(1);
+    expect(inv[0].status).toBe('paid');
+  });
+
+  it('"send reminder now" builds the right message today and can be sent twice safely', async () => {
+    const anaya = await db.students.where('name').equals('Anaya Singh').first();
+    const invoice = (await db.invoices.where('student_id').equals(anaya.id).toArray())[0];
+    const rows = await manualRowsForInvoice(invoice.id);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(['advance', 'due', 'overdue', 'final']).toContain(rows[0].stage);
+
+    await dispatchReminder(rows[0]);
+    await dispatchReminder(rows[0]); // second tap must reuse the log row, not hit the unique index
+    const logs = await db.reminder_log.where('invoice_id').equals(invoice.id).toArray();
+    expect(logs.filter((l) => l.recipient_type === rows[0].recipient_type && l.stage === rows[0].stage)).toHaveLength(1);
+  });
+
+  it('ships the polished parent template and drops the UPI line when none is set', async () => {
+    const t = await db.templates.get('overdue');
+    expect(t.body).toContain('UPI: {upi_id}');
+    expect(t.body).toContain('screenshot');
   });
 });

@@ -97,6 +97,7 @@ export function StudentList() {
         {filtered.length === 0 && <EmptyState>{t('noResults')}</EmptyState>}
         <div style="padding:14px">
           <button class="btn btn-primary btn-block" onClick={() => go('form', {})}>{t('addStudent')}</button>
+          <button class="btn btn-secondary btn-block" style="margin-top:8px" onClick={() => go('import')}>{t('importStudents')}</button>
         </div>
       </div>
       <BottomNav />

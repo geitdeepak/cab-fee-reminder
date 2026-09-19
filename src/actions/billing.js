@@ -3,7 +3,7 @@ import { db } from '../db/index.js';
 import { uuid } from '../lib/id.js';
 import { computeCycleAmount } from '../domain/fees.js';
 import { planInvoiceGeneration, planAgeing, outstandingBalance } from '../domain/invoices.js';
-import { todayISO, compareISO } from '../domain/dates.js';
+import { todayISO, compareISO, addMonths, addDays } from '../domain/dates.js';
 
 // ---------- Enrolment (FR-04) ----------
 
@@ -32,6 +32,17 @@ export async function saveEnrolment({ student_id, pickup_point_id, fee_plan_id, 
   const prior = await getActiveEnrolment(student_id);
   if (prior) {
     await db.enrolments.update(prior.id, { status: 'ended', ended_on: todayISO() });
+    // Re-enrolling must not leave a second, overlapping bill behind: cancel the old
+    // enrolment's untouched invoices that start on/after the new start date.
+    // Earlier unpaid invoices stay — those are genuine dues.
+    const stale = await db.invoices
+      .where('enrolment_id')
+      .equals(prior.id)
+      .filter((i) => (i.status === 'pending' || i.status === 'overdue') && !i.paid_amount && compareISO(i.period_start, start_date) >= 0)
+      .toArray();
+    for (const inv of stale) {
+      await db.invoices.update(inv.id, { status: 'cancelled', cancel_reason: 'Replaced by a new enrolment' });
+    }
   }
 
   const id = uuid();
@@ -50,6 +61,47 @@ export async function saveEnrolment({ student_id, pickup_point_id, fee_plan_id, 
     created_at: now
   });
   return id;
+}
+
+/**
+ * Enrolment for a student who is already travelling: the driver says whether
+ * the current cycle is already paid and whether older money is still owed,
+ * instead of the app back-filling months of history.
+ * - thisMonthPaid: the first invoice is created already settled (no payment
+ *   row, so it does not inflate this month's "collected").
+ * - oldDues: one extra "previous dues" invoice, due today, so the normal
+ *   reminder ladder starts from now rather than from an unknown old date.
+ */
+export async function saveEnrolmentWithOpening({ thisMonthPaid = false, oldDues = 0, ...enrolment }) {
+  const enrolmentId = await saveEnrolment(enrolment);
+  await runInvoiceEngine();
+
+  const enr = await db.enrolments.get(enrolmentId);
+  const plan = await db.fee_plans.get(enr.fee_plan_id);
+
+  if (thisMonthPaid) {
+    const first = await db.invoices.where('[enrolment_id+period_start]').equals([enrolmentId, enr.start_date]).first();
+    if (first) await db.invoices.update(first.id, { paid_amount: first.amount, status: 'paid', opening: true });
+  }
+
+  const dues = Math.round(Number(oldDues) || 0);
+  if (dues > 0) {
+    await db.invoices.add({
+      id: uuid(),
+      enrolment_id: enrolmentId,
+      student_id: enr.student_id,
+      period_start: addMonths(enr.start_date, -plan.months),
+      period_end: addDays(enr.start_date, -1),
+      amount: dues,
+      paid_amount: 0,
+      due_date: todayISO(),
+      status: 'pending',
+      cancel_reason: null,
+      opening: true,
+      created_at: new Date().toISOString()
+    });
+  }
+  return enrolmentId;
 }
 
 export async function endEnrolment(id) {

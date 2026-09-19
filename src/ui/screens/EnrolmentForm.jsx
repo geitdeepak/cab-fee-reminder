@@ -4,11 +4,12 @@ import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
 import { usePickupPoints } from '../../state/hooks.js';
 import { getStudent } from '../../actions/students.js';
-import { getActiveEnrolment, saveEnrolment, runInvoiceEngine } from '../../actions/billing.js';
+import { getActiveEnrolment, saveEnrolmentWithOpening } from '../../actions/billing.js';
 import { feeBreakdown } from '../../domain/fees.js';
 import { formatCurrency } from '../../lib/format.js';
-import { todayISO, formatDateHuman, dueDate } from '../../domain/dates.js';
+import { formatDateHuman, dueDate } from '../../domain/dates.js';
 import { TopBar } from '../components/TopBar.jsx';
+import { FeeFields, DEFAULT_FEE, startDateFor } from '../components/FeeFields.jsx';
 
 export function EnrolmentForm() {
   const { state, back, toast, root, t } = useUi();
@@ -17,37 +18,39 @@ export function EnrolmentForm() {
   const feePlans = useLiveQuery(() => db.fee_plans.toArray(), [], []);
   const [student, setStudent] = useState(null);
   const [pickupPointId, setPickupPointId] = useState('');
-  const [planId, setPlanId] = useState('monthly');
-  const [dueDay, setDueDay] = useState(5);
-  const [startDate, setStartDate] = useState(todayISO());
+  const [fee, setFee] = useState(DEFAULT_FEE);
 
   useEffect(() => {
     if (!studentId) return;
     getStudent(studentId).then((s) => {
       setStudent(s);
-      if (s) {
-        setPickupPointId(s.pickup_point_id);
-        setStartDate(s.joined_on || todayISO());
-      }
+      if (s) setPickupPointId(s.pickup_point_id);
     });
     getActiveEnrolment(studentId).then((e) => {
       if (e) {
         setPickupPointId(e.pickup_point_id);
-        setPlanId(e.fee_plan_id);
-        setDueDay(e.due_day);
+        setFee((f) => ({ ...f, planId: e.fee_plan_id, dueDay: e.due_day }));
       }
     });
   }, [studentId]);
 
   const pickup = pickups.find((p) => p.id === pickupPointId) || pickups[0];
-  const plan = feePlans.find((p) => p.id === planId);
+  const plan = feePlans.find((p) => p.id === fee.planId);
   const breakdown = pickup && plan ? feeBreakdown(pickup.monthly_fare, plan.months, plan.discount_pct) : null;
-  const firstDue = pickup && plan ? dueDate(startDate, dueDay) : null;
+  const startDate = startDateFor(fee.startChoice);
+  const firstDue = pickup && plan ? dueDate(startDate, fee.dueDay) : null;
 
   async function onSave() {
     try {
-      await saveEnrolment({ student_id: studentId, pickup_point_id: pickupPointId, fee_plan_id: planId, due_day: dueDay, start_date: startDate });
-      await runInvoiceEngine(); // first invoice appears immediately if within the 15-day horizon
+      await saveEnrolmentWithOpening({
+        student_id: studentId,
+        pickup_point_id: pickupPointId,
+        fee_plan_id: fee.planId,
+        due_day: fee.dueDay,
+        start_date: startDate,
+        thisMonthPaid: fee.paid,
+        oldDues: fee.oldDues
+      });
       toast(`${t('saveEnrolment')} · ${formatCurrency(pickup.monthly_fare)} locked ✓`);
       root('student', { studentId, tab: 'ledger' });
     } catch (e) {
@@ -83,30 +86,7 @@ export function EnrolmentForm() {
             </div>
           </div>
 
-          <div class="field">
-            <label>{t('feePlan')}</label>
-            <div style="display:flex;border:2px solid var(--color-text)">
-              {feePlans.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => setPlanId(p.id)}
-                  style={`flex:1;padding:10px 8px;border:0;text-align:left;min-height:52px;${planId === p.id ? 'background:var(--color-text);color:#fff' : 'background:var(--color-neutral-100);color:var(--color-text)'}`}
-                >
-                  <span style="display:block;font-size:13px;font-weight:700">{p.label}</span>
-                  <span style="display:block;font-size:10.5px;margin-top:2px;opacity:.8">{p.months} mo{p.discount_pct ? ` · −${p.discount_pct}%` : ''}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div class="field">
-            <label>{t('dueDay')}</label>
-            <div class="chip-row">
-              {[1, 5, 7, 10, 15, 20, 25, 28].map((d) => (
-                <button key={d} class={`chip${dueDay === d ? ' active' : ''}`} onClick={() => setDueDay(d)}>{d}</button>
-              ))}
-            </div>
-          </div>
+          <FeeFields value={fee} onChange={(patch) => setFee((f) => ({ ...f, ...patch }))} />
 
           {breakdown && (
             <div style="border:2px solid var(--color-text);background:var(--color-text);color:#fff;padding:14px">

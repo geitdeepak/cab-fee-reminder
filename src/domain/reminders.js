@@ -1,5 +1,5 @@
 // FR-07 / FR-08 / Section 7.3-7.4: escalation ladder, message composition and
-// the three duplicate-prevention guards. Pure functions — no IndexedDB calls.
+// the duplicate-prevention guards. Pure functions — no IndexedDB calls.
 import { addDays, formatDateHuman, formatPeriodHuman, daysBetween, compareISO } from './dates.js';
 import { isSettled, outstandingBalance } from './invoices.js';
 
@@ -30,29 +30,107 @@ export function validateTemplate(body) {
   return { valid: unknown.length === 0, unknown };
 }
 
+// A line that mentions one of these is dropped entirely when the value is empty,
+// so a driver with no UPI id never sends a dangling "UPI: " line.
+const OPTIONAL_LINE_KEYS = ['upi_id'];
+
 export function composeMessage(body, dataMap) {
-  return body.replace(/\{(\w+)\}/g, (m, key) => (dataMap[key] !== undefined && dataMap[key] !== null ? String(dataMap[key]) : ''));
+  const value = (key) => (dataMap[key] !== undefined && dataMap[key] !== null ? String(dataMap[key]) : '');
+  const lines = body.split('\n').filter((line) => {
+    return !OPTIONAL_LINE_KEYS.some((key) => line.includes(`{${key}}`) && value(key).trim() === '');
+  });
+  return lines
+    .join('\n')
+    .replace(/\{(\w+)\}/g, (m, key) => value(key))
+    .replace(/\n{3,}/g, '\n\n') // no stacked blank lines left behind by dropped lines
+    .trim();
 }
 
 function stageDate(dueDateIso, offsetDays) {
   return addDays(dueDateIso, offsetDays);
 }
 
+function firstName(student) {
+  return (student.name || '').split(' ')[0];
+}
+
 /**
- * Build the set of reminders that should be visible in the queue right now:
- * one row per (invoice, recipient) where the escalation stage has been
- * reached and no reminder_log row already exists for
- * [invoice_id + recipient_type + stage] (7.4 guard #2). Identical parent
- * numbers collapse into a single "father_mother" row (7.4 guard #3).
- *
- * @param {object} args
- * @param {Array} args.invoices
- * @param {Map<string,object>} args.studentsById
- * @param {Map<string,object>} args.pickupPointsById
- * @param {Set<string>} args.loggedKeys - `${invoice_id}|${recipient_type}|${stage}` already in reminder_log
- * @param {object} args.stageSettings - { advance:{enabled,offset}, due:{...}, overdue:{...}, final:{...} }
- * @param {string} args.today - ISO date
- * @param {object} [args.operator]
+ * Who a reminder goes to. `mode` is 'father', 'mother' or 'both'. A single
+ * -parent mode falls back to the other parent when the preferred one has no
+ * number, so a family is never silently skipped. If both numbers are the
+ * same, only one row is produced (7.4 guard #3).
+ */
+export function buildRecipients(student, mode = 'both') {
+  const father = student.father_phone
+    ? { type: 'father', name: student.father_name || '', phone: student.father_phone }
+    : null;
+  const mother = student.mother_phone
+    ? { type: 'mother', name: student.mother_name || '', phone: student.mother_phone }
+    : null;
+
+  let list;
+  if (mode === 'father') list = [father || mother];
+  else if (mode === 'mother') list = [mother || father];
+  else if (father && mother && father.phone === mother.phone) {
+    list = [{ ...father, name: [father.name, mother.name].filter(Boolean).join(' & ') }];
+  } else list = [father, mother];
+
+  return list.filter(Boolean);
+}
+
+/** Which template a hand-triggered reminder should use for an invoice today. */
+export function stageForManual(invoice, today) {
+  const late = daysBetween(invoice.due_date, today);
+  if (late >= 15) return 'final';
+  if (late >= 1) return 'overdue';
+  if (late === 0) return 'due';
+  return 'advance';
+}
+
+export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {} }) {
+  const balance = outstandingBalance(invoice);
+  const late = Math.max(0, daysBetween(invoice.due_date, today));
+  const first = firstName(student);
+  const parentLabel = recipient.name || `${first} ke ${recipient.type === 'father' ? 'Papa' : 'Mummy'}`;
+
+  return {
+    key: `${invoice.id}|${recipient.type}|${stage}`,
+    invoice_id: invoice.id,
+    student_id: student.id,
+    student_name: student.name,
+    class_name: student.class_name,
+    pickup_point_name: pickup ? pickup.name : '',
+    amount: balance,
+    due_date: invoice.due_date,
+    days_overdue: late,
+    stage,
+    template_id: stage,
+    recipient_type: recipient.type,
+    recipient_name: parentLabel,
+    recipient_phone: recipient.phone,
+    data_map: {
+      parent_name: recipient.name ? recipient.name.split(' ')[0] : `${first} ke parent`,
+      student_name: student.name,
+      class: student.class_name,
+      school: student.school_name || '',
+      pickup_point: pickup ? pickup.name : '',
+      amount: balance.toLocaleString('en-IN'),
+      period: formatPeriodHuman(invoice.period_start, invoice.period_end),
+      due_date: formatDateHuman(invoice.due_date),
+      days_overdue: String(late),
+      operator_name: operator.name || '',
+      operator_phone: operator.phone || '',
+      upi_id: operator.upi_id || ''
+    }
+  };
+}
+
+/**
+ * The reminders that should be visible in the queue right now: for each
+ * unpaid invoice and recipient, ONLY the latest escalation stage reached.
+ * An invoice that is 20 days late queues one Final Notice, not four
+ * messages (advance + due + overdue + final) at once. A recipient whose
+ * latest stage is already in reminder_log gets nothing (7.4 guard #2).
  */
 export function buildReminderQueue({
   invoices,
@@ -61,7 +139,8 @@ export function buildReminderQueue({
   loggedKeys,
   stageSettings,
   today,
-  operator = {}
+  operator = {},
+  recipientMode = 'both'
 }) {
   const rows = [];
 
@@ -69,70 +148,24 @@ export function buildReminderQueue({
     if (isSettled(inv)) continue;
     const student = studentsById.get(inv.student_id);
     if (!student || student.status !== 'active') continue;
+    if (outstandingBalance(inv) <= 0) continue;
 
-    const balance = outstandingBalance(inv);
-    if (balance <= 0) continue;
-
-    for (const stage of STAGES) {
+    const reached = STAGES.filter((stage) => {
       const cfg = stageSettings[stage];
-      if (!cfg || !cfg.enabled) continue;
-      const fireDate = stageDate(inv.due_date, cfg.offset);
-      if (compareISO(fireDate, today) > 0) continue; // stage not reached yet
+      return cfg && cfg.enabled && compareISO(stageDate(inv.due_date, cfg.offset), today) <= 0;
+    });
+    if (!reached.length) continue;
+    const stage = reached[reached.length - 1];
 
-      const recipients = buildRecipients(student);
-      for (const recipient of recipients) {
-        const key = `${inv.id}|${recipient.type}|${stage}`;
-        if (loggedKeys.has(key)) continue;
-
-        const pickup = pickupPointsById.get(student.pickup_point_id);
-        const dataMap = {
-          parent_name: recipient.name.split(' ')[0],
-          student_name: student.name,
-          class: student.class_name,
-          school: student.school_name,
-          pickup_point: pickup ? pickup.name : '',
-          amount: balance.toLocaleString('en-IN'),
-          period: formatPeriodHuman(inv.period_start, inv.period_end),
-          due_date: formatDateHuman(inv.due_date),
-          days_overdue: String(Math.max(0, daysBetween(inv.due_date, today))),
-          operator_name: operator.name || '',
-          operator_phone: operator.phone || '',
-          upi_id: operator.upi_id || ''
-        };
-
-        rows.push({
-          key,
-          invoice_id: inv.id,
-          student_id: student.id,
-          student_name: student.name,
-          class_name: student.class_name,
-          pickup_point_name: pickup ? pickup.name : '',
-          amount: balance,
-          due_date: inv.due_date,
-          days_overdue: Math.max(0, daysBetween(inv.due_date, today)),
-          stage,
-          template_id: stage,
-          recipient_type: recipient.type,
-          recipient_name: recipient.name,
-          recipient_phone: recipient.phone,
-          data_map: dataMap
-        });
-      }
+    const pickup = pickupPointsById.get(student.pickup_point_id);
+    for (const recipient of buildRecipients(student, recipientMode)) {
+      const key = `${inv.id}|${recipient.type}|${stage}`;
+      if (loggedKeys.has(key)) continue;
+      rows.push(makeReminderRow({ invoice: inv, student, pickup, recipient, stage, today, operator }));
     }
   }
 
   return rows;
-}
-
-/** Guard #3: if both parent numbers are identical, only one row is produced. */
-function buildRecipients(student) {
-  const father = student.father_phone ? { type: 'father', name: student.father_name, phone: student.father_phone } : null;
-  const mother = student.mother_phone ? { type: 'mother', name: student.mother_name, phone: student.mother_phone } : null;
-
-  if (father && mother && father.phone === mother.phone) {
-    return [{ type: 'father', name: `${father.name} & ${mother.name}`, phone: father.phone }];
-  }
-  return [father, mother].filter(Boolean);
 }
 
 /** 9.6 backup nag escalation. `intervalDays` (7, or 3 if persistence was

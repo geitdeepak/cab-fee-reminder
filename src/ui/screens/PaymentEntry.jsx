@@ -7,7 +7,7 @@ import { useOperator } from '../../state/hooks.js';
 import { formatCurrency } from '../../lib/format.js';
 import { todayISO, formatDateHuman, formatPeriodHuman } from '../../domain/dates.js';
 import { composeMessage } from '../../domain/reminders.js';
-import { getTemplateBody } from '../../actions/reminders.js';
+import { getTemplateBody, manualRowsForInvoice, dispatchReminder } from '../../actions/reminders.js';
 import { getSettingsMap } from '../../actions/settings.js';
 import { openWhatsApp } from '../../lib/whatsapp.js';
 import { TopBar } from '../components/TopBar.jsx';
@@ -20,6 +20,12 @@ export function PaymentEntry() {
   const invoice = useLiveQuery(() => getInvoice(invoiceId), [invoiceId], null);
   const student = useLiveQuery(() => (invoice ? db.students.get(invoice.student_id) : null), [invoice?.student_id], null);
   const operator = useOperator();
+  const reminderRows = useLiveQuery(() => manualRowsForInvoice(invoiceId), [invoiceId, invoice?.status], []);
+
+  async function onRemind(row) {
+    await dispatchReminder(row);
+    toast(t('openWhatsApp') + ' ✓');
+  }
 
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState('UPI');
@@ -127,6 +133,18 @@ export function PaymentEntry() {
           </div>
 
           <button class="btn btn-primary btn-block" disabled={!(amountNum > 0)} onClick={onSave}>{t('savePayment')}</button>
+
+          {reminderRows.length > 0 && (
+            <div class="card card-tight" style="display:flex;flex-direction:column;gap:8px">
+              <div class="section-title">{t('sendReminderNow')}</div>
+              <div style="font-size:11.5px;color:var(--color-neutral-700)">{t('sendReminderNowHelp')}</div>
+              {reminderRows.map((row) => (
+                <button key={row.key} class="btn btn-accent btn-block" onClick={() => onRemind(row)}>
+                  {t('send')} → {row.recipient_name} · {row.recipient_phone}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
