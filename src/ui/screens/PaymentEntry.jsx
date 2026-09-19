@@ -2,7 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
-import { getInvoice, recordPayment, balanceOf } from '../../actions/billing.js';
+import { getInvoice, recordPayment, balanceOf, cancelInvoice } from '../../actions/billing.js';
 import { useOperator } from '../../state/hooks.js';
 import { formatCurrency } from '../../lib/format.js';
 import { todayISO, formatDateHuman, formatPeriodHuman } from '../../domain/dates.js';
@@ -15,12 +15,30 @@ import { TopBar } from '../components/TopBar.jsx';
 const MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Other'];
 
 export function PaymentEntry() {
-  const { state, root, toast, t } = useUi();
+  const { state, root, toast, showDialog, t } = useUi();
   const invoiceId = state.params?.invoiceId;
   const invoice = useLiveQuery(() => getInvoice(invoiceId), [invoiceId], null);
   const student = useLiveQuery(() => (invoice ? db.students.get(invoice.student_id) : null), [invoice?.student_id], null);
   const operator = useOperator();
   const reminderRows = useLiveQuery(() => manualRowsForInvoice(invoiceId), [invoiceId, invoice?.status], []);
+
+  function onCancelBill() {
+    if ((invoice?.paid_amount || 0) > 0) {
+      toast(t('cancelBillPaid'));
+      return;
+    }
+    showDialog({
+      title: t('cancelBillTitle'),
+      body: t('cancelBillBody'),
+      confirmLabel: t('cancelBill'),
+      danger: true,
+      onConfirm: async () => {
+        await cancelInvoice(invoiceId, 'Cancelled by operator');
+        toast(t('cancelBillDone'));
+        root('student', { studentId: invoice.student_id, tab: 'ledger' });
+      }
+    });
+  }
 
   async function onRemind(row) {
     await dispatchReminder(row);
@@ -108,6 +126,8 @@ export function PaymentEntry() {
             </div>
           </div>
 
+          {invoice.status === 'cancelled' && <div class="banner banner-amber">{t('cancelBillDone')}</div>}
+
           <div class="field">
             <label>{t('amountReceived')}</label>
             <input class="input" inputMode="numeric" style="font-weight:800;font-size:22px" value={amount} onInput={(e) => setAmount(e.currentTarget.value.replace(/\D/g, ''))} />
@@ -132,7 +152,11 @@ export function PaymentEntry() {
             <input class="input" value={reference} placeholder={t('refPlaceholder')} onInput={(e) => setReference(e.currentTarget.value)} />
           </div>
 
-          <button class="btn btn-primary btn-block" disabled={!(amountNum > 0)} onClick={onSave}>{t('savePayment')}</button>
+          <button class="btn btn-primary btn-block" disabled={!(amountNum > 0) || invoice.status === 'cancelled'} onClick={onSave}>{t('savePayment')}</button>
+
+          {invoice.status !== 'cancelled' && (
+            <button class="btn btn-danger btn-block" onClick={onCancelBill}>{t('cancelBill')}</button>
+          )}
 
           {reminderRows.length > 0 && (
             <div class="card card-tight" style="display:flex;flex-direction:column;gap:8px">

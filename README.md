@@ -22,6 +22,10 @@ Push to Git and connect the repo to Cloudflare Pages (build command `npm run bui
 directory `dist`). HTTPS is automatic. The app must be opened over HTTPS and installed to the home
 screen (required on iOS so storage is not evicted, SRS 9.2).
 
+## Driver guide
+
+A plain-language guide in Hindi and English for drivers: [docs/driver-guide.md](docs/driver-guide.md).
+
 ## Layout
 
 | Path | Role |
@@ -63,10 +67,10 @@ OD-10 Hinglish default with English toggle.
 
 ## Not implemented yet
 
-- Pause enrolment; fee-plan discount editor; a screen to cancel a bill by hand.
+- Pause enrolment; fee-plan discount editor; undoing a cancelled bill.
 - Per-invoice UPI QR generated in the app (today the driver's own QR image is sent).
-- Backup 30-day full-screen interstitial and weekly launch prompt (banner escalation is done).
-- Biometric unlock, 60-second lockout after 10 wrong MPIN attempts.
-- Install-required onboarding gate (SRS 12.4), delete-permanently action, payment reversal UI.
+- Weekly launch prompt for backups (the banner and the 30-day full-screen reminder are done).
+- Biometric unlock.
+- Install-required onboarding gate (SRS 12.4), delete-permanently action, payment reversal screen.
 - Consent capture field (SEC-04), Hindi/Devanagari strings (UI is Hinglish + English).
 - Not yet exercised on a real phone: install, offline reload, WhatsApp hand-off, share sheet.

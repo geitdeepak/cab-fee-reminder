@@ -1,6 +1,7 @@
 // FR-12: MPIN setup/verification and 9.2 storage-durability request.
 import { db } from '../db/index.js';
 import { generateSalt, hashMpin } from '../lib/crypto.js';
+import { afterFailure, lockRemainingMs, CLEAN_STATE } from '../domain/lockout.js';
 
 export async function getOperator() {
   return db.operator.get('self');
@@ -43,4 +44,37 @@ export async function requestPersistence() {
     await db.settings.put({ key: 'backup_interval_days', value: 3 });
   }
   return granted;
+}
+
+// ---- Wrong-MPIN lockout (FR-12). Kept in localStorage so a page refresh does
+// not reset the counter; clearing site data also erases the register itself,
+// so this gives nobody a way round it.
+const LOCKOUT_KEY = 'cabfee_mpin_lockout';
+
+function readLockout() {
+  try {
+    return JSON.parse(localStorage.getItem(LOCKOUT_KEY)) || CLEAN_STATE;
+  } catch {
+    return CLEAN_STATE;
+  }
+}
+
+function writeLockout(state) {
+  try {
+    localStorage.setItem(LOCKOUT_KEY, JSON.stringify(state));
+  } catch {
+    // Storage unavailable: the lockout simply cannot persist across reloads.
+  }
+}
+
+export function lockoutSecondsLeft() {
+  return Math.ceil(lockRemainingMs(readLockout(), Date.now()) / 1000);
+}
+
+export function recordMpinFailure() {
+  writeLockout(afterFailure(readLockout(), Date.now()));
+}
+
+export function clearMpinFailures() {
+  writeLockout(CLEAN_STATE);
 }

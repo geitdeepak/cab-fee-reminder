@@ -198,3 +198,18 @@ describe('existing students: opening status, re-enrolment, import, send-now', ()
     expect(t.body).toContain('screenshot');
   });
 });
+
+describe('cancelling a bill', () => {
+  it('cancels an untouched bill but refuses one that already has a payment', async () => {
+    const { cancelInvoice } = await import('../src/actions/billing.js');
+    const untouched = (await db.invoices.toArray()).find((i) => i.status === 'pending' && !i.paid_amount);
+    await cancelInvoice(untouched.id, 'made by mistake');
+    expect((await db.invoices.get(untouched.id)).status).toBe('cancelled');
+
+    const paid = (await db.invoices.toArray()).find((i) => i.paid_amount > 0);
+    await expect(cancelInvoice(paid.id)).rejects.toThrow(/already has a payment/);
+
+    const { rows } = await buildQueue();
+    expect(rows.some((r) => r.invoice_id === untouched.id)).toBe(false); // its reminders stop
+  });
+});

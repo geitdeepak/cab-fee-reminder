@@ -173,7 +173,14 @@ export async function getInvoice(id) {
   return db.invoices.get(id);
 }
 
+/** Cancels a bill created by mistake. A bill with any money on it cannot be
+ * cancelled — reverse the payment first — so the ledger never loses a receipt. */
 export async function cancelInvoice(id, reason) {
+  const invoice = await db.invoices.get(id);
+  if (!invoice) throw new Error('Invoice not found.');
+  if (invoice.status === 'paid' || (invoice.paid_amount || 0) > 0) {
+    throw new Error('A bill that already has a payment cannot be cancelled.');
+  }
   await db.invoices.update(id, { status: 'cancelled', cancel_reason: reason || '' });
 }
 

@@ -183,3 +183,21 @@ describe('buildReminderQueue', () => {
     expect(rows.some((r) => r.stage === 'final')).toBe(false);
   });
 });
+
+import { needsBackupInterstitial } from '../src/domain/reminders.js';
+
+describe('needsBackupInterstitial (SRS 9.6)', () => {
+  const base = { daysSinceBackup: 45, studentCount: 20, daysSinceSetup: 60, snoozedUntil: 0, now: 1000 };
+  it('fires after 30 days without a backup', () => {
+    expect(needsBackupInterstitial(base)).toBe(true);
+    expect(needsBackupInterstitial({ ...base, daysSinceBackup: 29 })).toBe(false);
+  });
+  it('stays quiet for an empty register and while snoozed', () => {
+    expect(needsBackupInterstitial({ ...base, studentCount: 0 })).toBe(false);
+    expect(needsBackupInterstitial({ ...base, snoozedUntil: 5000 })).toBe(false);
+  });
+  it('counts from setup when a backup was never taken', () => {
+    expect(needsBackupInterstitial({ ...base, daysSinceBackup: null, daysSinceSetup: 40 })).toBe(true);
+    expect(needsBackupInterstitial({ ...base, daysSinceBackup: null, daysSinceSetup: 3 })).toBe(false);
+  });
+});

@@ -183,3 +183,16 @@ export function isWithinQuietHours(date, startHour, endHour) {
   const h = date.getHours();
   return h >= startHour && h < endHour;
 }
+
+/**
+ * SRS 9.6: from 30 days without a backup, a full-screen prompt on launch that
+ * can only be put off with "Remind me tomorrow". It never fires for an empty
+ * register, and for a register that was never backed up it counts from the day
+ * the app was set up rather than blocking a brand-new driver.
+ */
+export function needsBackupInterstitial({ daysSinceBackup, studentCount, daysSinceSetup, snoozedUntil = 0, now }) {
+  if (!studentCount) return false;
+  if (snoozedUntil > now) return false;
+  const days = daysSinceBackup != null ? daysSinceBackup : daysSinceSetup;
+  return days >= 30;
+}

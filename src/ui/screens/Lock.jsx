@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { useUi } from '../../state/ui.jsx';
-import { setupMpin, verifyMpin, saveOperatorProfile, requestPersistence } from '../../actions/auth.js';
+import { setupMpin, verifyMpin, saveOperatorProfile, requestPersistence, lockoutSecondsLeft, recordMpinFailure, clearMpinFailures } from '../../actions/auth.js';
 import { runInvoiceEngine } from '../../actions/billing.js';
 import { LangToggle } from '../components/LangToggle.jsx';
 
@@ -19,6 +19,13 @@ export function Lock() {
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [lockLeft, setLockLeft] = useState(() => lockoutSecondsLeft());
+
+  useEffect(() => {
+    if (lockLeft <= 0) return undefined;
+    const timer = setInterval(() => setLockLeft(lockoutSecondsLeft()), 500);
+    return () => clearInterval(timer);
+  }, [lockLeft > 0]);
 
   useEffect(() => {
     setPin('');
@@ -35,7 +42,7 @@ export function Lock() {
   }
 
   function tapDigit(d) {
-    if (busy) return;
+    if (busy || lockLeft > 0) return;
     if (d === 'del') return setPin((p) => p.slice(0, -1));
     if (d === 'ok') return submit();
     setPin((p) => {
@@ -78,11 +85,14 @@ export function Lock() {
     } else {
       const ok = await verifyMpin(value);
       if (ok) {
+        clearMpinFailures();
         runInvoiceEngine().catch(() => {}); // FR-05: engine runs on every launch
         unlock();
         setBusy(false);
         return;
       }
+      recordMpinFailure();
+      setLockLeft(lockoutSecondsLeft());
       setError(t('wrongMpin'));
       setShake(true);
       setTimeout(() => setShake(false), 400);
@@ -138,8 +148,12 @@ export function Lock() {
             <div key={i} class={`pin-dot${pin.length > i ? ' filled' : ''}`} />
           ))}
         </div>
-        {error && <div style="font-size:13px;font-weight:700;color:var(--color-accent-200);margin-bottom:12px">{error}</div>}
-        <div class="keypad">
+        {(lockLeft > 0 || error) && (
+          <div style="font-size:13px;font-weight:700;color:var(--color-accent-200);margin-bottom:12px">
+            {lockLeft > 0 ? `${t('lockedWait')} ${lockLeft}s` : error}
+          </div>
+        )}
+        <div class="keypad" style={lockLeft > 0 ? 'opacity:.35;pointer-events:none' : ''}>
           {KEYS.map((k) => (
             <button key={k} onClick={() => tapDigit(k)}>
               {k === 'del' ? '⌫' : k === 'ok' ? '→' : k}

@@ -4,6 +4,7 @@ import { ready } from './db/index.js';
 import { isMpinSet } from './actions/auth.js';
 import { Toast } from './ui/components/Toast.jsx';
 import { DialogHost } from './ui/components/Dialog.jsx';
+import { BackupInterstitial } from './ui/components/BackupInterstitial.jsx';
 
 import { Lock } from './ui/screens/Lock.jsx';
 import { Dashboard } from './ui/screens/Dashboard.jsx';
@@ -77,6 +78,7 @@ export function App({ needRefresh, onRefresh }) {
         <Boot />
         <Router />
       </div>
+      <BackupInterstitial />
       <Toast />
       <DialogHost />
     </UiProvider>

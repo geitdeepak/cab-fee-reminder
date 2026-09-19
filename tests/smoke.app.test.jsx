@@ -50,13 +50,13 @@ describe('App mount smoke test', () => {
 
     // --- Boot: seeds the DB, finds no MPIN, lands on the setup screen ---
     await waitFor(() => container.querySelector('input'));
-    expect(container.innerHTML).toContain('Shuru karte haiं'); // default Hinglish copy
+    expect(container.innerHTML).toContain('Shuru karte hain'); // default Hinglish copy
 
     // The language switch is present on the very first screen and works both ways.
     clickByText(container, '.lang-toggle button', 'English');
     await waitFor(() => container.innerHTML.includes('set up'));
     clickByText(container, '.lang-toggle button', 'Hinglish');
-    await waitFor(() => container.innerHTML.includes('Shuru karte haiं'));
+    await waitFor(() => container.innerHTML.includes('Shuru karte hain'));
 
     const nameInput = container.querySelector('input');
     nameInput.value = 'Test Operator';
