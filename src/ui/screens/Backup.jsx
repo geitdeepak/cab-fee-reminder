@@ -6,7 +6,7 @@ import { backupBanner } from '../../domain/reminders.js';
 import { TopBar } from '../components/TopBar.jsx';
 
 export function Backup() {
-  const { toast, showDialog, t } = useUi();
+  const { toast, showDialog, t, tf } = useUi();
   const status = useLiveQuery(() => getBackupStatus(), [], null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
@@ -31,16 +31,13 @@ export function Backup() {
     try {
       const { parsed, incoming, current } = await prepareRestore(file);
       showDialog({
-        title: 'Restore this backup?',
-        body:
-          `Current: ${current.students} students, ${current.invoices} invoices.\n` +
-          `Incoming: ${incoming.students} students, ${incoming.invoices} invoices.\n\n` +
-          'Everything on the phone now will be replaced by this file. This cannot be undone.',
-        confirmLabel: 'Yes, restore',
+        title: t('restoreTitle'),
+        body: tf('restoreBody', { cs: current.students, ci: current.invoices, ns: incoming.students, ni: incoming.invoices }),
+        confirmLabel: t('yesRestore'),
         danger: true,
         onConfirm: async () => {
           await confirmRestore(parsed);
-          toast('Restored ✓');
+          toast(t('restored'));
         }
       });
     } catch (e) {
@@ -60,7 +57,7 @@ export function Backup() {
           <div style={`border:2px solid var(--color-text);padding:14px;${cardStyle}`}>
             <div class="section-title">{t('lastBackup')}</div>
             <div style="font-weight:800;font-size:32px;margin-top:7px">
-              {status.daysSince == null ? 'Never' : status.daysSince === 0 ? 'Today' : `${status.daysSince}d ago`}
+              {status.daysSince == null ? t('backupNever') : status.daysSince === 0 ? t('backupToday') : tf('backupDaysAgo', { n: status.daysSince })}
             </div>
           </div>
           <button class="btn btn-primary btn-block" disabled={busy} onClick={onBackup}>{t('backupNow')}</button>

@@ -10,7 +10,7 @@ import { TopBar } from '../components/TopBar.jsx';
 import { BottomNav } from '../components/BottomNav.jsx';
 
 export function Dashboard() {
-  const { go, toast, t } = useUi();
+  const { go, toast, t, tf } = useUi();
   const [running, setRunning] = useState(false);
   const snap = useLiveQuery(() => dashboardSnapshot(), [], null);
   const backupStatus = useLiveQuery(() => getBackupStatus(), [], null);
@@ -19,7 +19,7 @@ export function Dashboard() {
     setRunning(true);
     try {
       const { generated } = await runInvoiceEngine();
-      toast(generated > 0 ? `${generated} new invoice${generated === 1 ? '' : 's'} created.` : 'Everything is already up to date.');
+      toast(generated > 0 ? tf('invoicesCreated', { n: generated }) : t('upToDate'));
     } finally {
       setRunning(false);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { imageFileToDataUrl } from '../../lib/image.js';
 import { isValidUpiId, buildPayLink } from '../../lib/payLink.js';
 import { useUi } from '../../state/ui.jsx';
+import { LANGUAGE_LABEL, normalizeLanguage } from '../../lib/languages.js';
 import { useOperator, useSettingsMap } from '../../state/hooks.js';
 import { saveOperatorProfile } from '../../actions/auth.js';
 import { setSetting } from '../../actions/settings.js';
@@ -35,7 +36,7 @@ export function Settings() {
   async function saveProfile() {
     const upiOk = !upi || isValidUpiId(upi);
     await saveOperatorProfile({ name, phone, business_name: operator?.business_name || '', upi_id: upiOk ? upi : operator?.upi_id || '' });
-    toast(upiOk ? 'Saved ✓' : t('upiInvalid'));
+    toast(upiOk ? t('saved') : t('upiInvalid'));
   }
 
   async function onQrFile(e) {
@@ -44,7 +45,7 @@ export function Settings() {
     if (!file) return;
     try {
       await setSetting('payment_qr', await imageFileToDataUrl(file));
-      toast('QR saved ✓');
+      toast(t('qrSaved'));
     } catch (err) {
       toast(err.message);
     }
@@ -62,7 +63,7 @@ export function Settings() {
       <div class="main-scroll scr">
         <div class="screen-pad">
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">Language / Bhasha</div>
+            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('languageSection')}</div>
             <div><LangToggle /></div>
           </div>
 
@@ -135,8 +136,8 @@ export function Settings() {
           <div style="display:flex;flex-direction:column;gap:10px">
             <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('messageLanguage')}</div>
             <div class="chip-row">
-              {[['hinglish', 'Hinglish'], ['english', 'English']].map(([key, label]) => (
-                <button key={key} class={`chip${(settingsMap.message_language || 'hinglish') === key ? ' active' : ''}`} onClick={() => setSetting('message_language', key)}>
+              {[['hindi', LANGUAGE_LABEL.hindi], ['english', LANGUAGE_LABEL.english]].map(([key, label]) => (
+                <button key={key} class={`chip${normalizeLanguage(settingsMap.message_language) === key ? ' active' : ''}`} onClick={() => setSetting('message_language', key)}>
                   {label}
                 </button>
               ))}
@@ -145,7 +146,7 @@ export function Settings() {
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">Billing</div>
+            <div class="section-title" style="border-bottom:2px solid var(--color-text);padding-bottom:7px">{t('billing')}</div>
             <div class="field">
               <label>{t('defaultDueDay')}</label>
               <div class="chip-row">

@@ -53,7 +53,8 @@ export async function saveStudent(data) {
     status: data.status || 'active',
     notes: (data.notes || '').trim(),
     // '' = follow the driver's default message language
-    message_language: ['hinglish', 'english'].includes(data.message_language) ? data.message_language : '',
+    // (an old 'hinglish' value from before the switch to Hindi is carried over as 'hindi')
+    message_language: data.message_language === 'hinglish' ? 'hindi' : ['hindi', 'english'].includes(data.message_language) ? data.message_language : '',
     updated_at: now
   };
   if (data.id) {

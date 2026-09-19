@@ -17,7 +17,7 @@ describe('/pay page', () => {
     expect(el.textContent).toContain('Ramesh Kumar');
     expect(el.textContent).toContain('1,600');
     expect(el.textContent).toContain('ramesh@upi'); // always visible so the parent can check it
-    expect(el.textContent).toContain('UPI ID copy kijiye');
+    expect(el.textContent).toContain('UPI ID कॉपी कीजिए');
     expect(el.textContent).toContain('Pay to UPI ID');
     const svg = el.querySelector('svg[aria-label="UPI payment QR code"]');
     expect(svg).not.toBeNull();
@@ -33,7 +33,7 @@ describe('/pay page', () => {
 
   it('refuses a link with a missing or malformed UPI id and offers no pay buttons', () => {
     const el = mount('https://cabfee.dev/pay?pa=not-a-upi-id&am=500');
-    expect(el.textContent).toContain('sahi nahi');
+    expect(el.textContent).toContain('सही नहीं');
     expect(el.querySelectorAll('a').length).toBe(0);
   });
 

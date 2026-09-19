@@ -5,13 +5,13 @@ import { BottomNav } from '../components/BottomNav.jsx';
 export function More() {
   const { go, t } = useUi();
   const items = [
-    { label: t('pickups'), sub: 'Fare master', screen: 'pickups' },
-    { label: t('importStudents'), sub: 'Excel / Google Sheets / CSV', screen: 'import' },
-    { label: t('invoices'), sub: 'Outstanding and history', screen: 'invoices' },
-    { label: t('templates'), sub: 'Reminder wording · Hinglish / English', screen: 'templates' },
-    { label: t('reports'), sub: 'Collection, defaulters', screen: 'reports' },
-    { label: t('backup'), sub: 'Export / restore', screen: 'backup' },
-    { label: t('settings'), sub: 'Profile, due day, escalation', screen: 'settings' }
+    { label: t('pickups'), sub: t('moreSubPickups'), screen: 'pickups' },
+    { label: t('importStudents'), sub: t('moreSubImport'), screen: 'import' },
+    { label: t('invoices'), sub: t('moreSubInvoices'), screen: 'invoices' },
+    { label: t('templates'), sub: t('moreSubTemplates'), screen: 'templates' },
+    { label: t('reports'), sub: t('moreSubReports'), screen: 'reports' },
+    { label: t('backup'), sub: t('moreSubBackup'), screen: 'backup' },
+    { label: t('settings'), sub: t('moreSubSettings'), screen: 'settings' }
   ];
   return (
     <div style="min-height:100vh;display:flex;flex-direction:column">

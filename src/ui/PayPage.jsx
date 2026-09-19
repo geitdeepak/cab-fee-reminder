@@ -21,7 +21,7 @@ export function PayPage() {
   if (!details.ok) {
     return (
       <div class="app-shell" style="padding:32px 20px">
-        <div style="font-weight:800;font-size:22px">Ye payment link sahi nahi hai</div>
+        <div style="font-weight:800;font-size:22px">यह पेमेंट लिंक सही नहीं है</div>
         <div style="margin-top:10px;line-height:1.55;color:var(--color-neutral-800)">
           This payment link is not valid. Please ask the driver to send the message again.
         </div>
@@ -44,9 +44,9 @@ export function PayPage() {
   return (
     <div class="app-shell" style="background:var(--color-bg)">
       <div style="background:var(--color-text);color:#fff;padding:26px 20px">
-        <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--color-accent-200)">Cab fee payment</div>
+        <div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--color-accent-200)">कैब फ़ीस पेमेंट · Cab fee payment</div>
         <div style="font-weight:800;font-size:22px;margin-top:8px;line-height:1.2">
-          {details.name ? `${details.name} ko payment` : 'Payment'}
+          {details.name ? `${details.name} को पेमेंट` : 'पेमेंट'}
         </div>
         {amountText && (
           <div style="font-weight:800;font-size:44px;margin-top:10px;line-height:1">{'₹'}{amountText}</div>
@@ -59,17 +59,17 @@ export function PayPage() {
           <div class="stat-label">UPI ID</div>
           <div style="font-weight:800;font-size:19px;word-break:break-all">{details.upiId}</div>
           <button class="btn btn-accent" style="align-self:flex-start;font-size:15px" onClick={() => copy('id', details.upiId)}>
-            {copied === 'id' ? 'Copy ho gaya ✓' : 'UPI ID copy kijiye'}
+            {copied === 'id' ? 'कॉपी हो गया ✓' : 'UPI ID कॉपी कीजिए'}
           </button>
         </div>
 
         <div>
-          <div style="font-weight:800;font-size:15px">Kaise pay karein / How to pay</div>
+          <div style="font-weight:800;font-size:15px">पेमेंट कैसे करें / How to pay</div>
           <ol style="margin:8px 0 0;padding-left:20px;line-height:1.7;font-size:14px">
-            <li>PhonePe / Google Pay / Paytm kholiye</li>
-            <li>"Pay to UPI ID" (ya "To UPI ID") chuniye aur copy kiya hua ID paste kijiye</li>
-            {amountText ? <li>Amount <b>{'₹'}{amountText}</b> daaliye aur pay kijiye</li> : <li>Amount daaliye aur pay kijiye</li>}
-            <li>Payment ke baad screenshot driver ko bhej dijiye</li>
+            <li>PhonePe / Google Pay / Paytm खोलिए</li>
+            <li>"UPI ID पर भेजें" ("Pay to UPI ID") चुनिए और कॉपी किया हुआ ID पेस्ट कीजिए</li>
+            {amountText ? <li>रकम <b>{'₹'}{amountText}</b> डालिए और पेमेंट कीजिए</li> : <li>रकम डालिए और पेमेंट कीजिए</li>}
+            <li>पेमेंट के बाद स्क्रीनशॉट ड्राइवर को भेज दीजिए</li>
           </ol>
           <div style="margin-top:6px;font-size:12.5px;color:var(--color-neutral-700);line-height:1.55">
             Open your UPI app, choose "Pay to UPI ID", paste the ID above, enter the amount, and send the driver a screenshot.
@@ -78,7 +78,7 @@ export function PayPage() {
 
         {qr && (
           <div class="card card-tight" style="display:flex;flex-direction:column;align-items:center;gap:8px">
-            <div class="stat-label" style="align-self:flex-start">Ya QR se pay kijiye / Or pay by QR</div>
+            <div class="stat-label" style="align-self:flex-start">या QR से पेमेंट कीजिए / Or pay by QR</div>
             <svg
               viewBox={`0 0 ${qr.size} ${qr.size}`}
               width="220"
@@ -91,7 +91,7 @@ export function PayPage() {
               <path d={qr.path} fill="#000" />
             </svg>
             <div style="font-size:12px;line-height:1.5;color:var(--color-neutral-700);text-align:center">
-              Is QR ka screenshot lekar app mein "Scan / Upload QR" se chuniye, ya kisi doosre phone se scan kijiye.
+              इस QR का स्क्रीनशॉट लेकर UPI ऐप में "QR स्कैन / अपलोड" से चुनिए, या किसी दूसरे फ़ोन से स्कैन कीजिए।
               <br />
               Take a screenshot and pick it with your UPI app's "Scan / Upload QR", or scan it from another phone.
             </div>
@@ -99,7 +99,7 @@ export function PayPage() {
         )}
 
         <div style="font-size:12.5px;line-height:1.6;color:var(--color-neutral-800)">
-          Pay karne se pehle naam aur UPI ID ek baar check kar lijiye.
+          पेमेंट करने से पहले नाम और UPI ID एक बार जाँच लीजिए।
           <br />
           Check the name and UPI ID before paying.
         </div>

@@ -82,7 +82,7 @@ export function StudentList() {
               <span style="flex:1;min-width:0">
                 <span style="display:block;font-weight:700;font-size:14.5px">{s.name}</span>
                 <span style="display:block;font-size:11.5px;color:var(--color-neutral-700);margin-top:1px">
-                  {s.class_name} · {s.school_name} · {pickup?.name || '—'}
+                  {[s.class_name, s.school_name, pickup?.name || '—'].filter(Boolean).join(' · ')}
                 </span>
               </span>
               <span style="text-align:right;flex:0 0 auto">

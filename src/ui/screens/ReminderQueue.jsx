@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, useEffect } from 'preact/hooks';
 import { useUi } from '../../state/ui.jsx';
+import { LANGUAGE_LABEL } from '../../lib/languages.js';
 import { useSettingsMap } from '../../state/hooks.js';
 import { buildQueue, dispatchReminder, skipReminder, undoDispatch, getSentToday, composeForRow } from '../../actions/reminders.js';
 import { formatCurrency } from '../../lib/format.js';
@@ -17,7 +18,7 @@ const STAGE_STYLE = {
 };
 
 export function ReminderQueue() {
-  const { toast, root, t } = useUi();
+  const { toast, root, t, tf } = useUi();
   const [mode, setMode] = useState('list');
   const [cardIdx, setCardIdx] = useState(0);
 
@@ -71,7 +72,7 @@ export function ReminderQueue() {
 
           {!queueResult?.quiet && rows.length > 0 && mode === 'list' && (
             <div class="card card-tight" style="display:flex;align-items:center;gap:10px">
-              <div style="flex:1;font-size:12.5px;color:var(--color-neutral-800)">{rows.length} pending</div>
+              <div style="flex:1;font-size:12.5px;color:var(--color-neutral-800)">{tf('nPending', { n: rows.length })}</div>
               <button
                 class="btn btn-primary"
                 onClick={() => {
@@ -90,7 +91,7 @@ export function ReminderQueue() {
                 <div style="display:flex;gap:10px;align-items:flex-start">
                   <div style="flex:1;min-width:0">
                     <div style="font-weight:800;font-size:16px">
-                      {row.student_name} <span class="tag" style="vertical-align:middle;margin-left:4px">{row.language === 'english' ? 'English' : 'Hinglish'}</span>
+                      {row.student_name} <span class="tag" style="vertical-align:middle;margin-left:4px">{LANGUAGE_LABEL[row.language] || LANGUAGE_LABEL.hindi}</span>
                     </div>
                     <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:2px">
                       {row.class_name} · {row.pickup_point_name}
@@ -204,7 +205,7 @@ export function ReminderQueue() {
   );
 }
 
-const row_language = (r) => (r.language === 'english' ? 'English' : 'Hinglish');
+const row_language = (r) => LANGUAGE_LABEL[r.language] || LANGUAGE_LABEL.hindi;
 
 function MessagePreview({ row, attachQr }) {
   const [text, setText] = useState('');

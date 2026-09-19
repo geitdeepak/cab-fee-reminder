@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
+import { LANGUAGE_LABEL } from '../../lib/languages.js';
 import { usePickupPoints } from '../../state/hooks.js';
 import { saveStudent, getStudent } from '../../actions/students.js';
 import { saveEnrolmentWithOpening } from '../../actions/billing.js';
@@ -21,7 +22,7 @@ const EMPTY = {
 };
 
 export function StudentForm() {
-  const { state, back, root, toast, t } = useUi();
+  const { state, back, root, toast, t, te } = useUi();
   const studentId = state.params?.studentId;
   const isEdit = !!studentId;
   const pickups = usePickupPoints().filter((p) => p.active);
@@ -92,7 +93,7 @@ export function StudentForm() {
         value={form[key] || ''}
         onInput={(e) => set(key, e.currentTarget.value.replace(/\D/g, '').slice(0, 10))}
       />
-      {errors[key] && <div class="field-error">{errors[key]}</div>}
+      {errors[key] && <div class="field-error">{te(errors[key])}</div>}
     </div>
   );
 
@@ -100,7 +101,7 @@ export function StudentForm() {
     <div class="field">
       <label>{label}</label>
       <input class="input" value={form[key] || ''} onInput={(e) => set(key, e.currentTarget.value)} />
-      {errors[key] && <div class="field-error">{errors[key]}</div>}
+      {errors[key] && <div class="field-error">{te(errors[key])}</div>}
     </div>
   );
 
@@ -131,9 +132,9 @@ export function StudentForm() {
                   <span style="font-weight:800;font-size:14px">{formatCurrency(p.monthly_fare)}</span>
                 </button>
               ))}
-              {pickups.length === 0 && <div style="font-size:12.5px;color:var(--color-neutral-700)">Add a pickup point first (More → Pickup points).</div>}
+              {pickups.length === 0 && <div style="font-size:12.5px;color:var(--color-neutral-700)">{t('addPickupFirst')}</div>}
             </div>
-            {errors.pickup_point_id && <div class="field-error">{errors.pickup_point_id}</div>}
+            {errors.pickup_point_id && <div class="field-error">{te(errors.pickup_point_id)}</div>}
           </div>
 
           {phoneInput('father_phone', t('fatherPhone'))}
@@ -142,8 +143,8 @@ export function StudentForm() {
           <div class="field">
             <label>{t('messageLanguage')}</label>
             <div class="chip-row">
-              {[['', t('defaultOption')], ['hinglish', 'Hinglish'], ['english', 'English']].map(([key, label]) => (
-                <button key={key || 'default'} class={`chip${(form.message_language || '') === key ? ' active' : ''}`} onClick={() => set('message_language', key)}>
+              {[['', t('defaultOption')], ['hindi', LANGUAGE_LABEL.hindi], ['english', LANGUAGE_LABEL.english]].map(([key, label]) => (
+                <button key={key || 'default'} class={`chip${(form.message_language === 'hinglish' ? 'hindi' : form.message_language || '') === key ? ' active' : ''}`} onClick={() => set('message_language', key)}>
                   {label}
                 </button>
               ))}
@@ -173,7 +174,7 @@ export function StudentForm() {
                 <label>{t('bloodGroup')}</label>
                 <div class="chip-row">
                   {BLOOD_OPTIONS.map((b) => (
-                    <button key={b} class={`chip${form.blood_group === b ? ' active' : ''}`} onClick={() => set('blood_group', b)}>{b}</button>
+                    <button key={b} class={`chip${form.blood_group === b ? ' active' : ''}`} onClick={() => set('blood_group', b)}>{b === 'Unknown' ? t('bloodUnknown') : b}</button>
                   ))}
                 </div>
               </div>

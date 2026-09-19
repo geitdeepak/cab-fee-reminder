@@ -167,8 +167,8 @@ describe('buildReminderQueue', () => {
       stageSettings,
       today: '2026-05-05'
     });
-    expect(rows[0].data_map.parent_name).toBe('Aarav ke parent');
-    expect(rows[0].recipient_name).toBe('Aarav ke Papa');
+    expect(rows[0].data_map.parent_name).toBe('Aarav के अभिभावक');
+    expect(rows[0].recipient_name).toBe('Aarav के पापा');
   });
 
   it('respects a disabled stage', () => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'preact/hooks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
+import { LANGUAGE_LABEL, normalizeLanguage } from '../../lib/languages.js';
 import { saveTemplate } from '../../actions/reminders.js';
 import { setSetting } from '../../actions/settings.js';
 import { useSettingsMap } from '../../state/hooks.js';
@@ -13,20 +14,20 @@ const SAMPLE_DATA = {
   pickup_point: 'Alpha-1 Main Gate', amount: '1,600', period: 'Aug 2026', due_date: '05 Aug 2026',
   days_overdue: '12', operator_name: 'Ramesh Kumar', operator_phone: '9812345678', upi_id: 'ramesh@upi',
   pay_link: 'https://your-site/p?u=ramesh%40upi&a=1600',
-  qr_note: 'QR code is message ke saath attached hai.',
+  qr_note: 'QR कोड इस मैसेज के साथ लगा है।',
   receipt_no: 'RCP-2026-0143', mode: 'UPI', paid_on: '18 Aug 2026'
 };
 
 export function Templates() {
-  const { toast, t } = useUi();
+  const { toast, t, tf } = useUi();
   const templates = useLiveQuery(() => db.templates.toArray(), [], []);
   const settingsMap = useSettingsMap();
-  const sendingLang = settingsMap?.message_language === 'english' ? 'english' : 'hinglish';
+  const sendingLang = normalizeLanguage(settingsMap?.message_language);
   const [activeId, setActiveId] = useState('advance');
   const [body, setBody] = useState('');
 
-  const lang = activeId.endsWith('_en') ? 'english' : 'hinglish';
-  const visible = templates.filter((tp) => (tp.language || 'hinglish') === lang);
+  const lang = activeId.endsWith('_en') ? 'english' : 'hindi';
+  const visible = templates.filter((tp) => normalizeLanguage(tp.language) === lang);
   const current = templates.find((tp) => tp.id === activeId);
 
   function switchLanguage(next) {
@@ -47,7 +48,7 @@ export function Templates() {
   async function onSave() {
     try {
       await saveTemplate(activeId, body);
-      toast('Saved ✓');
+      toast(t('saved'));
     } catch (e) {
       toast(e.message);
     }
@@ -60,13 +61,13 @@ export function Templates() {
         <div style="padding:12px 14px 0;display:flex;align-items:center;gap:10px;background:var(--color-neutral-100)">
           <span class="stat-label">{t('messageLanguage')}</span>
           <div class="lang-toggle">
-            <button class={lang === 'hinglish' ? 'active' : ''} onClick={() => switchLanguage('hinglish')}>Hinglish</button>
+            <button class={lang === 'hindi' ? 'active' : ''} onClick={() => switchLanguage('hindi')}>{LANGUAGE_LABEL.hindi}</button>
             <button class={lang === 'english' ? 'active' : ''} onClick={() => switchLanguage('english')}>English</button>
           </div>
         </div>
         <div style="padding:10px 14px 12px;background:var(--color-neutral-100);display:flex;flex-direction:column;gap:8px">
           <div style="font-size:12.5px;line-height:1.5;font-weight:700">
-            {t('sendingInNow')} <span class="tag">{sendingLang === 'english' ? 'English' : 'Hinglish'}</span>
+            {t('sendingInNow')} <span class="tag">{LANGUAGE_LABEL[sendingLang]}</span>
           </div>
           {lang !== sendingLang && (
             <button
@@ -77,7 +78,7 @@ export function Templates() {
                 toast(t('sendingInChanged'));
               }}
             >
-              {lang === 'english' ? t('sendInEnglish') : t('sendInHinglish')}
+              {lang === 'english' ? t('sendInEnglish') : t('sendInHindi')}
             </button>
           )}
           <div style="font-size:11.5px;line-height:1.5;color:var(--color-neutral-700)">{t('sendingInHelp')}</div>
@@ -97,7 +98,7 @@ export function Templates() {
           <textarea class="input" rows={11} value={body} onInput={(e) => onChange(e.currentTarget.value)} style="font-size:13px;line-height:1.5" />
           {!valid && (
             <div style="border:2px solid var(--color-accent);background:var(--color-accent-100);color:var(--color-accent-900);padding:10px;font-size:12.5px;font-weight:700">
-              Unrecognised placeholder {`{${unknown[0]}}`} — this will not save.
+              {tf('unknownPlaceholder', { p: `{${unknown[0]}}` })}
             </div>
           )}
           <div>

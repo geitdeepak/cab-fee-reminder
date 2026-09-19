@@ -9,7 +9,7 @@ export function SafetyCard({ student }) {
       <div style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;opacity:.9">{t('safetyCard')}</div>
       <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin-top:10px;align-items:baseline">
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.85">{t('bloodGroup')}</div>
-        <div style="font-weight:800;font-size:19px;line-height:1">{student.blood_group || 'Unknown'}</div>
+        <div style="font-weight:800;font-size:19px;line-height:1">{!student.blood_group || student.blood_group === 'Unknown' ? t('bloodUnknown') : student.blood_group}</div>
         <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;opacity:.85">{t('allergies')}</div>
         <div style="font-weight:700;font-size:14px;line-height:1.35">{student.allergies || '—'}</div>
       </div>

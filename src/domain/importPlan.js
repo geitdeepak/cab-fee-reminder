@@ -9,7 +9,7 @@ const PLAN_ALIASES = {
   yearly: 'yearly', year: 'yearly', annual: 'yearly', '12': 'yearly', y: 'yearly'
 };
 
-const LANGUAGE_ALIASES = { hinglish: 'hinglish', hindi: 'hinglish', hi: 'hinglish', english: 'english', en: 'english', eng: 'english' };
+const LANGUAGE_ALIASES = { hindi: 'hindi', hinglish: 'hindi', hi: 'hindi', english: 'english', en: 'english', eng: 'english' };
 
 const YES = new Set(['y', 'yes', 'true', '1', 'paid', 'haan', 'ha', 'han', 'done', 'x']);
 
@@ -70,7 +70,7 @@ export function planImport(records, { pickupPoints, students, defaults = { plan:
     // Blank = follow the driver's default message language.
     const langRaw = String(r.message_language || '').trim().toLowerCase();
     const messageLanguage = langRaw ? LANGUAGE_ALIASES[langRaw] : '';
-    if (langRaw && !messageLanguage) errors.push(`Language "${r.message_language}" is not English or Hinglish`);
+    if (langRaw && !messageLanguage) errors.push(`Language "${r.message_language}" is not English or Hindi`);
 
     let dueDay = defaults.dueDay;
     if (r.due_day) {

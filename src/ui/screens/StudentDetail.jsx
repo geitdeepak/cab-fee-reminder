@@ -2,11 +2,13 @@ import { useState, useEffect } from 'preact/hooks';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
+import { LANGUAGE_LABEL, normalizeLanguage } from '../../lib/languages.js';
 import { getStudent } from '../../actions/students.js';
 import { getActiveEnrolment, invoicesForStudent } from '../../actions/billing.js';
 import { studentLedgerText } from '../../actions/reports.js';
 import { useOperator } from '../../state/hooks.js';
 import { formatCurrency } from '../../lib/format.js';
+import { planLabel } from '../../lib/labels.js';
 import { formatDateHuman } from '../../domain/dates.js';
 import { SafetyCard } from '../components/SafetyCard.jsx';
 import { TopBar } from '../components/TopBar.jsx';
@@ -14,7 +16,7 @@ import { TopBar } from '../components/TopBar.jsx';
 const STATUS_COLOR = { overdue: 'color:var(--color-accent-700)', partial: 'color:var(--color-accent-700)', paid: 'color:var(--color-neutral-600)', pending: 'color:var(--color-neutral-800)', cancelled: 'color:var(--color-neutral-500)' };
 
 export function StudentDetail() {
-  const { state, go, toast, t } = useUi();
+  const { state, go, toast, t, tf } = useUi();
   const studentId = state.params?.studentId;
   const [tab, setTab] = useState(state.params?.tab || 'record');
   const student = useLiveQuery(() => getStudent(studentId), [studentId], null);
@@ -35,10 +37,10 @@ export function StudentDetail() {
   async function onShareLedger() {
     const text = await studentLedgerText(studentId, operator?.name);
     if (navigator.share) {
-      try { await navigator.share({ text, title: `${student.name} – Ledger` }); return; } catch { /* user cancelled */ }
+      try { await navigator.share({ text, title: `${student.name} – ${t('ledger')}` }); return; } catch { /* user cancelled */ }
     }
     await navigator.clipboard?.writeText(text).catch(() => {});
-    toast('Ledger copied.');
+    toast(t('ledgerCopied'));
   }
 
   return (
@@ -65,12 +67,12 @@ export function StudentDetail() {
               [t('classLabel'), student.class_name],
               [t('school'), student.school_name],
               [t('pickupPoint'), pickup ? `${pickup.name} · ${formatCurrency(pickup.monthly_fare)}` : '—'],
-              [t('feePlan'), plan ? `${plan.label} · ${formatCurrency(enrolment?.cycle_amount)}` : 'Not enrolled'],
-              [t('fatherName'), `${student.father_name} · ${student.father_phone || '—'}`],
-              [t('motherName'), `${student.mother_name} · ${student.mother_phone || '—'}`],
-              [t('messageLanguage'), student.message_language === 'english' ? 'English' : student.message_language === 'hinglish' ? 'Hinglish' : t('defaultOption')],
-              ['Joined', formatDateHuman(student.joined_on)],
-              ['Status', student.status === 'active' ? t('active') : t('inactive')]
+              [t('feePlan'), plan ? `${planLabel(t, plan)} · ${formatCurrency(enrolment?.cycle_amount)}` : t('notEnrolled')],
+              [t('fatherName'), [student.father_name, student.father_phone].filter(Boolean).join(' · ') || '—'],
+              [t('motherName'), [student.mother_name, student.mother_phone].filter(Boolean).join(' · ') || '—'],
+              [t('messageLanguage'), student.message_language ? LANGUAGE_LABEL[normalizeLanguage(student.message_language)] : t('defaultOption')],
+              [t('joined'), formatDateHuman(student.joined_on)],
+              [t('status'), student.status === 'active' ? t('active') : t('inactive')]
             ].map(([label, value]) => (
               <div key={label} style="display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid var(--color-neutral-300);align-items:baseline">
                 <div style="flex:0 0 120px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--color-neutral-700)">{label}</div>
@@ -90,7 +92,7 @@ export function StudentDetail() {
               <button key={inv.id} class="list-row" onClick={() => go('pay', { invoiceId: inv.id, studentId })}>
                 <div style="flex:1;min-width:0">
                   <div style="font-weight:700;font-size:13.5px">{formatDateHuman(inv.period_start)} – {formatDateHuman(inv.period_end)}</div>
-                  <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:1px">due {formatDateHuman(inv.due_date)}</div>
+                  <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:1px">{tf('dueOn', { date: formatDateHuman(inv.due_date) })}</div>
                 </div>
                 <div style="text-align:right">
                   <div style="font-weight:800;font-size:14.5px">{formatCurrency(inv.amount)}</div>
@@ -98,7 +100,7 @@ export function StudentDetail() {
                 </div>
               </button>
             ))}
-            {invoices.length === 0 && <div class="empty-state">No invoices yet.</div>}
+            {invoices.length === 0 && <div class="empty-state">{t('noInvoicesYet')}</div>}
             <div style="display:flex;gap:8px;padding:14px">
               <button class="btn btn-secondary" onClick={onShareLedger}>{t('share')}</button>
             </div>
@@ -107,7 +109,7 @@ export function StudentDetail() {
 
         {tab === 'notes' && (
           <div style="padding:14px">
-            <div class="card card-tight" style="white-space:pre-wrap">{student.notes || 'No notes yet.'}</div>
+            <div class="card card-tight" style="white-space:pre-wrap">{student.notes || t('noNotesYet')}</div>
           </div>
         )}
       </div>

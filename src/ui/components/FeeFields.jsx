@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/index.js';
 import { useUi } from '../../state/ui.jsx';
+import { planLabel } from '../../lib/labels.js';
 import { billingStartDate } from '../../domain/dates.js';
 
 export const DEFAULT_FEE = { planId: 'monthly', dueDay: 5, startChoice: 'month', paid: false, oldDues: '' };
@@ -22,8 +23,8 @@ export function FeeFields({ value, onChange }) {
               onClick={() => onChange({ planId: p.id })}
               style={`flex:1;padding:10px 8px;border:0;text-align:left;min-height:52px;${value.planId === p.id ? 'background:var(--color-text);color:#fff' : 'background:var(--color-neutral-100);color:var(--color-text)'}`}
             >
-              <span style="display:block;font-size:13px;font-weight:700">{p.label}</span>
-              <span style="display:block;font-size:10.5px;margin-top:2px;opacity:.8">{p.months} mo{p.discount_pct ? ` · −${p.discount_pct}%` : ''}</span>
+              <span style="display:block;font-size:13px;font-weight:700">{planLabel(t, p)}</span>
+              <span style="display:block;font-size:10.5px;margin-top:2px;opacity:.8">{p.months} {t('monthShort')}{p.discount_pct ? ` · −${p.discount_pct}%` : ''}</span>
             </button>
           ))}
         </div>

@@ -12,7 +12,7 @@ import { TopBar } from '../components/TopBar.jsx';
 import { FeeFields, DEFAULT_FEE, startDateFor } from '../components/FeeFields.jsx';
 
 export function EnrolmentForm() {
-  const { state, back, toast, root, t } = useUi();
+  const { state, back, toast, root, t, tf } = useUi();
   const studentId = state.params?.studentId;
   const pickups = usePickupPoints().filter((p) => p.active);
   const feePlans = useLiveQuery(() => db.fee_plans.toArray(), [], []);
@@ -51,7 +51,7 @@ export function EnrolmentForm() {
         thisMonthPaid: fee.paid,
         oldDues: fee.oldDues
       });
-      toast(`${t('saveEnrolment')} · ${formatCurrency(pickup.monthly_fare)} locked ✓`);
+      toast(tf('fareLockedToast', { fare: formatCurrency(pickup.monthly_fare) }));
       root('student', { studentId, tab: 'ledger' });
     } catch (e) {
       toast(e.message);

@@ -12,10 +12,11 @@ import { getSettingsMap } from '../../actions/settings.js';
 import { openWhatsApp } from '../../lib/whatsapp.js';
 import { TopBar } from '../components/TopBar.jsx';
 
-const MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Other'];
+// Stored (and printed on receipts) as these English values; only the chip labels are translated.
+const MODES = [['Cash', 'modeCash'], ['UPI', 'modeUPI'], ['Bank Transfer', 'modeBank'], ['Cheque', 'modeCheque'], ['Other', 'modeOther']];
 
 export function PaymentEntry() {
-  const { state, root, toast, showDialog, t } = useUi();
+  const { state, root, toast, showDialog, t, tf } = useUi();
   const invoiceId = state.params?.invoiceId;
   const invoice = useLiveQuery(() => getInvoice(invoiceId), [invoiceId], null);
   const student = useLiveQuery(() => (invoice ? db.students.get(invoice.student_id) : null), [invoice?.student_id], null);
@@ -96,12 +97,12 @@ export function PaymentEntry() {
             <div style="border:2px solid var(--color-text);background:var(--color-success);color:#fff;padding:14px">
               <div class="section-title">{t('paymentSaved')}</div>
               <div style="font-weight:800;font-size:30px;margin-top:7px">{formatCurrency(amountNum)}</div>
-              <div style="font-size:13px;margin-top:6px">{done.status === 'paid' ? 'Invoice settled and out of the queue.' : `Balance remaining: ${formatCurrency(invoice.amount - done.paid_amount)}`}</div>
+              <div style="font-size:13px;margin-top:6px">{done.status === 'paid' ? t('invoiceSettled') : tf('balanceRemaining', { amount: formatCurrency(invoice.amount - done.paid_amount) })}</div>
             </div>
             <div class="card card-tight">
               <div class="stat-label" style="margin-bottom:8px">{t('receiptPreview')}</div>
               <div style="font-size:12.5px;line-height:1.6">
-                Receipt: {done.receipt_no}<br />
+                {t('receiptLabel')}: {done.receipt_no}<br />
                 {student.name} ({student.class_name})<br />
                 {formatPeriodHuman(invoice.period_start, invoice.period_end)}<br />
                 {formatCurrency(amountNum)} · {mode}
@@ -124,7 +125,7 @@ export function PaymentEntry() {
             <div class="stat-label">{t('settling')}</div>
             <div style="font-weight:800;font-size:18px;margin-top:3px">{student.name}</div>
             <div style="font-size:12px;color:var(--color-neutral-700);margin-top:2px">
-              {formatPeriodHuman(invoice.period_start, invoice.period_end)} · due {formatDateHuman(invoice.due_date)} · {formatCurrency(balance)}
+              {formatPeriodHuman(invoice.period_start, invoice.period_end)} · {tf('dueOn', { date: formatDateHuman(invoice.due_date) })} · {formatCurrency(balance)}
             </div>
           </div>
 
@@ -135,16 +136,16 @@ export function PaymentEntry() {
             <input class="input" inputMode="numeric" style="font-weight:800;font-size:22px" value={amount} onInput={(e) => setAmount(e.currentTarget.value.replace(/\D/g, ''))} />
             <div style="font-size:11.5px;color:var(--color-neutral-700)">
               {amountNum < balance
-                ? `Part payment — balance ${formatCurrency(balance - amountNum)} stays in the queue.`
-                : 'Full amount — the invoice will be settled.'}
+                ? tf('partPaymentNote', { amount: formatCurrency(balance - amountNum) })
+                : t('fullAmountNote')}
             </div>
           </div>
 
           <div class="field">
             <label>{t('mode')}</label>
             <div class="chip-row">
-              {MODES.map((m) => (
-                <button key={m} class={`chip${mode === m ? ' active' : ''}`} onClick={() => setMode(m)}>{m}</button>
+              {MODES.map(([m, key]) => (
+                <button key={m} class={`chip${mode === m ? ' active' : ''}`} onClick={() => setMode(m)}>{t(key)}</button>
               ))}
             </div>
           </div>

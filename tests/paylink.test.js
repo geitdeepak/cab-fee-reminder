@@ -66,14 +66,14 @@ describe('the link inside a reminder message', () => {
     const r = row({ name: 'Ramesh', phone: '9812345678', upi_id: 'ramesh@upi' });
     expect(new URL(r.data_map.pay_link).searchParams.get('a')).toBe('1000'); // 1600 - 600 already paid
     const text = composeMessage(body, r.data_map);
-    expect(text).toContain('Payment link: https://cabfee.example.dev/p?u=ramesh%40upi&a=1000');
+    expect(text).toContain('पेमेंट लिंक: https://cabfee.example.dev/p?u=ramesh%40upi&a=1000');
     expect(text).toContain('UPI ID: ramesh@upi');
-    expect(text).toContain('Mobile number: 9812345678');
+    expect(text).toContain('मोबाइल नंबर: 9812345678');
   });
 
   it('leaves out the link and UPI lines when the driver has not set a UPI id', () => {
     const text = composeMessage(body, row({ name: 'Ramesh', phone: '9812345678' }).data_map);
-    expect(text).not.toContain('Payment link');
+    expect(text).not.toContain('पेमेंट लिंक');
     expect(text).not.toContain('UPI ID');
     expect(text).not.toMatch(/\n{3,}/);
   });
@@ -103,13 +103,34 @@ describe('the payment block: QR note and mobile number', () => {
 
   it('offers every way to pay in one tidy block', () => {
     const text = composeMessage(body, { ...data, qr_note: '' });
-    const block = text.slice(text.indexOf('UPI ID'), text.indexOf('Agar payment'));
-    expect(block).toBe('UPI ID: ramesh@upi\nMobile number: 9812345678\nPayment link: https://x.dev/pay?pa=ramesh%40upi\n\n');
+    const block = text.slice(text.indexOf('UPI ID'), text.indexOf('अगर पेमेंट'));
+    expect(block).toBe('UPI ID: ramesh@upi\nमोबाइल नंबर: 9812345678\nपेमेंट लिंक: https://x.dev/pay?pa=ramesh%40upi\n\n');
   });
 
   it('drops the mobile-number line, and the signature line, when the driver has no phone saved', () => {
     const text = composeMessage(body, { ...data, operator_phone: '', qr_note: '' });
-    expect(text).not.toContain('Mobile number');
+    expect(text).not.toContain('मोबाइल नंबर');
     expect(text.trim().endsWith('Ramesh')).toBe(true);
+  });
+});
+
+describe('the payment block in English', () => {
+  const body = SEEDED_TEMPLATES.find((t) => t.id === 'due_en').body;
+  const data = { parent_name: 'Rajesh', student_name: 'Aarav', class: 'IV', period: 'May 2026', amount: '1,600',
+    operator_name: 'Ramesh', operator_phone: '9812345678', upi_id: 'ramesh@upi', pay_link: 'https://x.dev/p?u=ramesh%40upi&a=1600' };
+
+  it('carries every way to pay with English labels, and the QR note only when attached', () => {
+    const text = composeMessage(body, { ...data, qr_note: 'A QR code is attached to this message.' });
+    expect(text).toContain('A QR code is attached to this message.');
+    expect(text).toContain('UPI ID: ramesh@upi');
+    expect(text).toContain('Mobile number: 9812345678');
+    expect(text).toContain('Payment link: https://x.dev/p?u=ramesh%40upi&a=1600');
+    expect(composeMessage(body, { ...data, qr_note: '' })).not.toContain('attached');
+  });
+
+  it('drops lines with nothing to show', () => {
+    const text = composeMessage(body, { ...data, upi_id: '', pay_link: '', qr_note: '' });
+    expect(text).not.toMatch(/UPI ID|Payment link/);
+    expect(text).toContain('Mobile number: 9812345678');
   });
 });

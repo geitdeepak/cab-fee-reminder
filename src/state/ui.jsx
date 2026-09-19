@@ -1,6 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useReducer, useCallback, useRef, useEffect } from 'preact/hooks';
-import { t as translate } from './strings.js';
+import { t as translate, tf as translateFormat, localizeError } from './strings.js';
 import { getSettingsMap, setSetting } from '../actions/settings.js';
 
 const UiContext = createContext(null);
@@ -74,7 +74,7 @@ export function UiProvider({ children }) {
 
   const toast = useCallback((message) => {
     clearTimeout(toastTimer.current);
-    dispatch({ type: 'TOAST', message });
+    dispatch({ type: 'TOAST', message: localizeError(stateRef.current.lang, message) });
     toastTimer.current = setTimeout(() => dispatch({ type: 'TOAST', message: null }), 2600);
   }, []);
 
@@ -124,9 +124,16 @@ export function UiProvider({ children }) {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
-  const tr = useCallback((key) => translate(state.lang, key), [state.lang]);
+  // The page language drives font choice and the Devanagari-specific spacing rules in the stylesheet.
+  useEffect(() => {
+    document.documentElement.lang = state.lang === 'hi' ? 'hi' : 'en';
+  }, [state.lang]);
 
-  const value = { state, go, back, root, lock, unlock, bootDone, setLang, toast, showDialog, closeDialog, t: tr };
+  const tr = useCallback((key) => translate(state.lang, key), [state.lang]);
+  const trf = useCallback((key, vars) => translateFormat(state.lang, key, vars), [state.lang]);
+  const te = useCallback((message) => localizeError(state.lang, message), [state.lang]);
+
+  const value = { state, go, back, root, lock, unlock, bootDone, setLang, toast, showDialog, closeDialog, t: tr, tf: trf, te };
   return <UiContext.Provider value={value}>{children}</UiContext.Provider>;
 }
 

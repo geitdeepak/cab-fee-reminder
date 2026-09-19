@@ -1,4 +1,4 @@
-// English / Hinglish reminders: the driver's default, a per-student override, the
+// English / Hindi reminders: the driver's default, a per-student override, the
 // receipt, import, and phones that only have the older Hinglish templates.
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -38,30 +38,34 @@ beforeAll(async () => {
 });
 
 describe('language rules', () => {
-  it('a student\'s own choice wins over the default; unknown values mean Hinglish', () => {
+  it('a student\'s own choice wins over the default; unknown values (and the old "hinglish") mean Hindi', () => {
     expect(languageFor({ message_language: '' }, 'english')).toBe('english');
-    expect(languageFor({ message_language: 'hinglish' }, 'english')).toBe('hinglish');
-    expect(languageFor({ message_language: 'english' }, 'hinglish')).toBe('english');
-    expect(languageFor({}, undefined)).toBe('hinglish');
-    expect(languageFor({ message_language: 'klingon' }, 'klingon')).toBe('hinglish');
+    expect(languageFor({ message_language: 'hindi' }, 'english')).toBe('hindi');
+    expect(languageFor({ message_language: 'english' }, 'hindi')).toBe('english');
+    expect(languageFor({}, undefined)).toBe('hindi');
+    expect(languageFor({ message_language: 'hinglish' }, 'hinglish')).toBe('hindi');
+    expect(languageFor({ message_language: 'klingon' }, 'klingon')).toBe('hindi');
   });
 
   it('English templates are the ids ending in _en', () => {
     expect(templateIdFor('overdue', 'english')).toBe('overdue_en');
-    expect(templateIdFor('overdue', 'hinglish')).toBe('overdue');
+    expect(templateIdFor('overdue', 'hindi')).toBe('overdue');
   });
 
   it('greets a parent with no saved name naturally in each language', () => {
     expect(parentNameFor('', { name: 'Aarav Sharma' }, 'english')).toBe('Parent of Aarav');
-    expect(parentNameFor('', { name: 'Aarav Sharma' }, 'hinglish')).toBe('Aarav ke parent');
+    expect(parentNameFor('', { name: 'Aarav Sharma' }, 'hindi')).toBe('Aarav के अभिभावक');
     expect(parentNameFor('Rajesh Kumar', { name: 'Aarav' }, 'english')).toBe('Rajesh');
   });
 });
 
 describe('stored templates', () => {
-  it('ships a complete English set alongside the Hinglish one', async () => {
+  it('ships a complete English set alongside the Hindi one', async () => {
     for (const base of ['advance', 'due', 'overdue', 'final', 'receipt']) {
-      expect(await db.templates.get(base)).toMatchObject({ language: 'hinglish' });
+      const hi = await db.templates.get(base);
+      expect(hi.language).toBe('hindi');
+      expect(hi.body).toContain('नमस्ते {parent_name} जी');
+      expect(hi.body).not.toMatch(/Namaste|dijiye|kijiye|hai\b/); // no Latin-script Hindi left
       const en = await db.templates.get(`${base}_en`);
       expect(en.language).toBe('english');
       expect(en.body).toContain('Dear {parent_name}');
@@ -70,13 +74,13 @@ describe('stored templates', () => {
     expect(SEEDED_TEMPLATES).toHaveLength(10);
   });
 
-  it('adds the English set to a phone that only has the older Hinglish templates, without touching edits', async () => {
+  it('adds the English set to a phone that only has the older templates, without touching edits', async () => {
     await db.templates.bulkDelete(['due_en', 'final_en']);
-    await db.templates.update('overdue', { body: 'my own Hinglish wording' });
+    await db.templates.update('overdue', { body: 'my own wording' });
     await seedIfEmpty(db);
     expect(await db.templates.get('due_en')).toBeTruthy();
     expect(await db.templates.get('final_en')).toBeTruthy();
-    expect((await db.templates.get('overdue')).body).toBe('my own Hinglish wording');
+    expect((await db.templates.get('overdue')).body).toBe('my own wording');
     await db.templates.update('overdue', { body: SEEDED_TEMPLATES.find((t) => t.id === 'overdue').body });
   });
 
@@ -92,15 +96,15 @@ describe('sending in each language', () => {
   it('follows the driver\'s default, and a student\'s override beats it', async () => {
     const plain = await studentWithBill('Tara Jain', '9440556677', '');
     const eng = await studentWithBill('Sara Khan', '9212334455', 'english');
-    const hing = await studentWithBill('Vivaan Gupta', '9555001122', 'hinglish');
+    const hing = await studentWithBill('Vivaan Gupta', '9555001122', 'hindi');
 
-    await setSetting('message_language', 'hinglish');
+    await setSetting('message_language', 'hindi');
     let rows = {
       plain: (await manualRowsForInvoice(plain.invoice.id))[0],
       eng: (await manualRowsForInvoice(eng.invoice.id))[0],
       hing: (await manualRowsForInvoice(hing.invoice.id))[0]
     };
-    expect([rows.plain.language, rows.eng.language, rows.hing.language]).toEqual(['hinglish', 'english', 'hinglish']);
+    expect([rows.plain.language, rows.eng.language, rows.hing.language]).toEqual(['hindi', 'english', 'hindi']);
     expect(rows.eng.template_id.endsWith('_en')).toBe(true);
     expect(rows.plain.template_id.endsWith('_en')).toBe(false);
 
@@ -110,8 +114,8 @@ describe('sending in each language', () => {
       hing: (await manualRowsForInvoice(hing.invoice.id))[0]
     };
     expect(rows.plain.language).toBe('english'); // default changed
-    expect(rows.hing.language).toBe('hinglish'); // explicit choice kept
-    await setSetting('message_language', 'hinglish');
+    expect(rows.hing.language).toBe('hindi'); // explicit choice kept
+    await setSetting('message_language', 'hindi');
   });
 
   it('builds a full English message, and only mentions the QR when one is attached', async () => {
@@ -124,25 +128,27 @@ describe('sending in each language', () => {
     expect(plain).toContain('UPI ID: ramesh@upi');
     expect(plain).toContain('Mobile number: 9812345678');
     expect(plain).toContain('https://cabfee.example.dev/p?u=ramesh%40upi');
-    expect(plain).not.toMatch(/Namaste|dijiye|attached/);
+    expect(plain).not.toMatch(/नमस्ते|attached/);
 
     const withQr = await composeForRow(row, { attachQr: true });
     expect(withQr).toContain('A QR code is attached to this message.');
   });
 
-  it('keeps the Hinglish message unchanged for Hinglish students', async () => {
-    const h = await studentWithBill('Ishaan Rao', '9663311220', 'hinglish');
+  it('sends the Hindi message, with a Hindi QR note, to Hindi students', async () => {
+    const h = await studentWithBill('Ishaan Rao', '9663311220', 'hindi');
     const [row] = await manualRowsForInvoice(h.invoice.id);
     const text = await composeForRow(row, { attachQr: true });
-    expect(text).toContain('Namaste Rajesh ji');
-    expect(text).toContain('QR code is message ke saath attached hai.');
+    expect(text).toContain('नमस्ते Rajesh जी');
+    expect(text).toContain('QR कोड इस मैसेज के साथ लगा है।');
+    expect(text).toContain('रु.');
+    expect(text).not.toMatch(/Namaste|dijiye/);
   });
 });
 
 describe('saving and importing the choice', () => {
   it('stores English/Hinglish and treats anything else as "follow the default"', async () => {
     const base = { name: 'Neha Roy', class_name: 'II', father_phone: '9745012345', pickup_point_id: pickupId };
-    for (const [given, stored] of [['english', 'english'], ['hinglish', 'hinglish'], ['', ''], ['french', ''], [undefined, '']]) {
+    for (const [given, stored] of [['english', 'english'], ['hindi', 'hindi'], ['hinglish', 'hindi'], ['', ''], ['french', ''], [undefined, '']]) {
       const id = await saveStudent({ ...base, name: `Neha ${given}`, message_language: given });
       expect((await db.students.get(id)).message_language).toBe(stored);
     }
@@ -156,8 +162,8 @@ describe('saving and importing the choice', () => {
       'Chirag C,V,9800000003,Alpha-1,\n' +
       'Dev D,V,9800000004,Alpha-1,klingon\n'
     );
-    expect(plan.ready.map((i) => i.student.message_language)).toEqual(['english', 'hinglish', '']);
+    expect(plan.ready.map((i) => i.student.message_language)).toEqual(['english', 'hindi', '']);
     expect(plan.invalid).toHaveLength(1);
-    expect(plan.invalid[0].errors[0]).toMatch(/not English or Hinglish/);
+    expect(plan.invalid[0].errors[0]).toMatch(/not English or Hindi/);
   });
 });

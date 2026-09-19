@@ -23,7 +23,7 @@ export function Reports() {
       ],
       `cabfee-defaulters-${todayISO()}.csv`
     );
-    toast('CSV exported ✓');
+    toast(t('csvExported'));
   }
 
   if (!report) return <div style="min-height:100vh" />;
@@ -88,7 +88,7 @@ export function Reports() {
             <span style="font-weight:800;font-size:15px;color:var(--color-accent-700)">{formatCurrency(d.amount)}</span>
           </button>
         ))}
-        {defaulterRows.length === 0 && <div class="empty-state">None right now.</div>}
+        {defaulterRows.length === 0 && <div class="empty-state">{t('noneRightNow')}</div>}
         <div style="padding:14px">
           <button class="btn btn-secondary btn-block" onClick={onExport}>{t('exportCsv')}</button>
         </div>

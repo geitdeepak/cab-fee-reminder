@@ -287,3 +287,21 @@ a { color: var(--color-accent-700); }
 @media (min-width: 481px) {
   .app-shell { border-left: 1px solid var(--color-neutral-300); border-right: 1px solid var(--color-neutral-300); min-height: 100vh; }
 }
+
+/* ---- Hindi (Devanagari) ----------------------------------------------------------------------
+   The page language is set by the app (Hindi -> lang="hi"). Letter-spacing pulls Devanagari letters
+   and vowel signs apart, and the tight line heights used for Latin headings clip the marks above the
+   line, so both are relaxed here. Small labels also get a little larger: Devanagari is harder to read
+   at the sizes the English labels use. */
+html[lang="hi"] * { letter-spacing: normal !important; }
+html[lang="hi"] body { line-height: 1.55; }
+html[lang="hi"] .topbar-title { line-height: 1.4; }
+html[lang="hi"] .nav-label { font-size: 11px; }
+html[lang="hi"] .stat-label,
+html[lang="hi"] .section-title,
+html[lang="hi"] .tag { font-size: 11.5px; }
+html[lang="hi"] .btn,
+html[lang="hi"] .chip,
+html[lang="hi"] .opt-row,
+html[lang="hi"] .list-row { line-height: 1.4; }
+html[lang="hi"] .lang-toggle button { font-size: 12.5px; }

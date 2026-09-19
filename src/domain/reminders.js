@@ -57,12 +57,12 @@ function firstName(student) {
   return (student.name || '').split(' ')[0];
 }
 
-export const LANGUAGES = ['hinglish', 'english'];
+export const LANGUAGES = ['hindi', 'english'];
 
-/** A student's own choice wins; otherwise the driver's default. Anything unknown is Hinglish. */
+/** A student's own choice wins; otherwise the driver's default. Anything unknown (including the old 'hinglish') is Hindi. */
 export function languageFor(student, defaultLanguage) {
   const pick = student.message_language || defaultLanguage;
-  return pick === 'english' ? 'english' : 'hinglish';
+  return pick === 'english' ? 'english' : 'hindi';
 }
 
 /** English messages live in templates whose id ends with "_en". */
@@ -74,7 +74,7 @@ export function templateIdFor(base, language) {
 export function parentNameFor(recipientName, student, language) {
   if (recipientName) return recipientName.split(' ')[0];
   const first = firstName(student);
-  return language === 'english' ? `Parent of ${first}` : `${first} ke parent`;
+  return language === 'english' ? `Parent of ${first}` : `${first} के अभिभावक`;
 }
 
 /**
@@ -110,12 +110,16 @@ export function stageForManual(invoice, today) {
   return 'advance';
 }
 
-export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {}, payBaseUrl = '', defaultLanguage = 'hinglish' }) {
+export function makeReminderRow({ invoice, student, pickup, recipient, stage, today, operator = {}, payBaseUrl = '', defaultLanguage = 'hindi' }) {
   const balance = outstandingBalance(invoice);
   const late = Math.max(0, daysBetween(invoice.due_date, today));
   const first = firstName(student);
   const language = languageFor(student, defaultLanguage);
-  const parentLabel = recipient.name || `${first} ke ${recipient.type === 'father' ? 'Papa' : 'Mummy'}`;
+  const parentLabel =
+    recipient.name ||
+    (language === 'english'
+      ? `${recipient.type === 'father' ? 'Father' : 'Mother'} of ${first}`
+      : `${first} के ${recipient.type === 'father' ? 'पापा' : 'मम्मी'}`);
 
   return {
     key: `${invoice.id}|${recipient.type}|${stage}`,
@@ -173,7 +177,7 @@ export function buildReminderQueue({
   operator = {},
   recipientMode = 'both',
   payBaseUrl = '',
-  defaultLanguage = 'hinglish'
+  defaultLanguage = 'hindi'
 }) {
   const rows = [];
 

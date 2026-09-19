@@ -8,7 +8,7 @@ import { TopBar } from '../components/TopBar.jsx';
 const FIELD_LABEL = { name: 'name', class_name: 'class', pickup: 'pickup', father_phone: 'father_phone (or mother_phone)' };
 
 export function ImportStudents() {
-  const { root, toast, t } = useUi();
+  const { root, toast, t, tf, te } = useUi();
   const [text, setText] = useState('');
   const [plan, setPlan] = useState(null);
   const [result, setResult] = useState(null);
@@ -87,31 +87,31 @@ export function ImportStudents() {
             <div style="display:flex;flex-direction:column;gap:12px">
               {plan.missing.length > 0 && (
                 <div class="banner banner-amber">
-                  Missing column(s): {plan.missing.map((m) => FIELD_LABEL[m] || m).join(', ')}
+                  {t('missingColumns')} {plan.missing.map((m) => FIELD_LABEL[m] || m).join(', ')}
                 </div>
               )}
               {plan.unknownHeaders.length > 0 && (
-                <div style="font-size:12px;color:var(--color-neutral-700)">Ignored columns: {plan.unknownHeaders.join(', ')}</div>
+                <div style="font-size:12px;color:var(--color-neutral-700)">{t('ignoredColumns')} {plan.unknownHeaders.join(', ')}</div>
               )}
 
               <div class="card card-tight" style="display:flex;flex-direction:column;gap:6px;font-size:13.5px">
-                <div><b>{plan.ready.length}</b> ready to add</div>
-                {plan.duplicates.length > 0 && <div><b>{plan.duplicates.length}</b> already in the app (skipped)</div>}
-                {plan.invalid.length > 0 && <div style="color:var(--color-accent-700)"><b>{plan.invalid.length}</b> have problems (skipped)</div>}
+                <div>{tf('readyToAdd', { n: plan.ready.length })}</div>
+                {plan.duplicates.length > 0 && <div>{tf('alreadyInApp', { n: plan.duplicates.length })}</div>}
+                {plan.invalid.length > 0 && <div style="color:var(--color-accent-700)">{tf('haveProblems', { n: plan.invalid.length })}</div>}
                 {plan.newPickups.length > 0 && (
                   <div style="font-size:12px;color:var(--color-neutral-700)">
-                    New pickup points will be created: {plan.newPickups.map((p) => `${p.name} (₹${p.fare})`).join(', ')}
+                    {t('newPickupsCreated')} {plan.newPickups.map((p) => `${p.name} (₹${p.fare})`).join(', ')}
                   </div>
                 )}
               </div>
 
               {plan.invalid.slice(0, 25).map((i) => (
                 <div key={i.line} style="border:2px solid var(--color-accent);background:var(--color-accent-100);padding:9px 11px;font-size:12.5px">
-                  <b>Row {i.line}{i.student.name ? ` · ${i.student.name}` : ''}</b>
-                  <div>{i.errors.join('; ')}</div>
+                  <b>{tf('rowN', { n: i.line })}{i.student.name ? ` · ${i.student.name}` : ''}</b>
+                  <div>{i.errors.map(te).join('; ')}</div>
                 </div>
               ))}
-              {plan.invalid.length > 25 && <div style="font-size:12px">…and {plan.invalid.length - 25} more.</div>}
+              {plan.invalid.length > 25 && <div style="font-size:12px">{tf('andMore', { n: plan.invalid.length - 25 })}</div>}
 
               <button class="btn btn-accent btn-block" disabled={busy || plan.ready.length === 0} onClick={onImport}>
                 {t('importNow')} ({plan.ready.length})
@@ -123,7 +123,7 @@ export function ImportStudents() {
             <div class="card card-tight" style="display:flex;flex-direction:column;gap:8px">
               <div style="font-weight:800;font-size:16px">{result.created} {t('importDone')}</div>
               {result.failures.map((f) => (
-                <div key={f.line} style="font-size:12.5px;color:var(--color-accent-700)">Row {f.line}: {f.message}</div>
+                <div key={f.line} style="font-size:12.5px;color:var(--color-accent-700)">{tf('rowN', { n: f.line })}: {te(f.message)}</div>
               ))}
               <button class="btn btn-primary" onClick={() => root('students')}>{t('students')}</button>
             </div>

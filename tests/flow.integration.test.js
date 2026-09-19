@@ -195,9 +195,9 @@ describe('existing students: opening status, re-enrolment, import, send-now', ()
   it('ships the polished parent template with every way to pay', async () => {
     const t = await db.templates.get('overdue');
     expect(t.body).toContain('UPI ID: {upi_id}');
-    expect(t.body).toContain('Mobile number: {operator_phone}');
+    expect(t.body).toContain('मोबाइल नंबर: {operator_phone}');
     expect(t.body).toContain('{qr_note}');
-    expect(t.body).toContain('screenshot');
+    expect(t.body).toContain('स्क्रीनशॉट');
   });
 });
 
@@ -217,20 +217,36 @@ describe('cancelling a bill', () => {
 });
 
 describe('upgrading an existing phone', () => {
-  it('replaces untouched earlier-wording templates with the new payment block, but never an edited template', async () => {
+  it('moves a phone still on Hinglish over to Hindi: untouched templates upgrade, edits and choices carry over', async () => {
     const { seedIfEmpty, SEEDED_TEMPLATES } = await import('../src/db/seed.js');
-    const seeded = (id) => SEEDED_TEMPLATES.find((t) => t.id === id).body;
+    const { LEGACY_HINGLISH_CURRENT, LEGACY_HINGLISH_FIRST_RELEASE } = await import('../src/db/legacyHinglish.js');
+    const hindi = (id) => SEEDED_TEMPLATES.find((t) => t.id === id).body;
     const block = '{qr_note}\nUPI ID: {upi_id}\nMobile number: {operator_phone}\nPayment link: {pay_link}\n';
 
-    await db.templates.update('due', { body: seeded('due').replace(block, 'UPI: {upi_id}\n') }); // release with the UPI line only
-    await db.templates.update('overdue', { body: seeded('overdue').replace(block, 'Payment link: {pay_link}\nUPI: {upi_id}\n') }); // previous release
-    await db.templates.update('final', { body: 'My own wording {student_name}' }); // driver's edit
+    // as an older phone would look
+    await db.templates.update('advance', { body: LEGACY_HINGLISH_CURRENT.advance, language: 'hinglish' }); // untouched, latest Hinglish
+    await db.templates.update('due', { body: LEGACY_HINGLISH_FIRST_RELEASE.due, language: 'hinglish' }); // the very first wording
+    await db.templates.update('overdue', {
+      body: LEGACY_HINGLISH_CURRENT.overdue.replace(block, 'Payment link: {pay_link}\nUPI: {upi_id}\n'),
+      language: 'hinglish'
+    }); // an in-between release
+    await db.templates.update('final', { body: 'My own wording {student_name}', language: 'hinglish' }); // the driver's edit
+    await db.settings.put({ key: 'message_language', value: 'hinglish' });
+    await db.students.update(studentId, { message_language: 'hinglish' });
+
     await seedIfEmpty(db);
 
-    expect((await db.templates.get('due')).body).toBe(seeded('due'));
-    expect((await db.templates.get('overdue')).body).toBe(seeded('overdue'));
-    expect((await db.templates.get('final')).body).toBe('My own wording {student_name}');
-    await db.templates.update('final', { body: seeded('final') });
+    for (const id of ['advance', 'due', 'overdue']) {
+      const t = await db.templates.get(id);
+      expect(t.body).toBe(hindi(id));
+      expect(t.language).toBe('hindi');
+    }
+    const own = await db.templates.get('final');
+    expect(own.body).toBe('My own wording {student_name}'); // never overwritten
+    expect(own.language).toBe('hindi'); // but now filed with the Hindi set
+    expect((await db.settings.get('message_language')).value).toBe('hindi');
+    expect((await db.students.get(studentId)).message_language).toBe('hindi');
+    await db.templates.update('final', { body: hindi('final') });
   });
 
   it('turns QR attachment off once for phones that had it on, and leaves later choices alone', async () => {

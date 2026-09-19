@@ -10,7 +10,7 @@ import { BottomNav } from '../components/BottomNav.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 
 export function Invoices() {
-  const { go, t } = useUi();
+  const { go, t, tf } = useUi();
   const [tab, setTab] = useState('outstanding');
   const invoices = useLiveQuery(() => db.invoices.toArray(), [], []);
   const students = useLiveQuery(() => db.students.toArray(), [], []);
@@ -52,7 +52,7 @@ export function Invoices() {
               <span style="flex:1;min-width:0">
                 <span style="display:block;font-weight:700;font-size:14px">{s?.name || '—'}</span>
                 <span style="display:block;font-size:11.5px;color:var(--color-neutral-700);margin-top:1px">
-                  due {formatDateHuman(inv.due_date)}
+                  {tf('dueOn', { date: formatDateHuman(inv.due_date) })}
                 </span>
               </span>
               <span style="text-align:right">

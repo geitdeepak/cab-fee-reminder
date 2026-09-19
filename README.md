@@ -14,7 +14,7 @@ npm run build      # production bundle in dist/
 npm run preview    # serve dist/ locally to test install + offline
 ```
 
-Regenerate the PWA icons with `npm run icons` (no dependencies; replace with real branding later).
+Regenerate the PWA icons with `npm run icons` (no dependencies). The icon is a small yellow taxi drawn in code (`scripts/generate-icons.mjs`).
 
 ## Deploy (free)
 
@@ -43,11 +43,11 @@ Defaults follow the SRS's own recommendations. Confirm with the operator before 
 OD-1 full cycle charged (no pro-rating), OD-2 quarterly 5% / yearly 10% (editable in data),
 OD-3 due day 5, OD-4 all four escalation stages on, OD-5 reminders to both parents,
 OD-8 UPI id stored but not yet in the seeded templates, OD-9 unpaid invoice stays payable,
-OD-10 Hinglish default with English toggle.
+OD-10 Hindi (Devanagari) default with an English toggle.
 
 ## Entering an existing register
 
-- **Quick add** (Bachche → Naya bachcha): only name, class, pickup point and one parent number are
+- **Quick add** (बच्चे → नया बच्चा जोड़िए / Students → Add a student): only name, class, pickup point and one parent number are
   required. The fee section asks for plan, due day, bill-from date, whether this month is already
   paid, and any old amount pending. "Save & add next" keeps the pickup point and fee choices.
 - **Import** (Aur → Excel/CSV, or the Students screen): choose a CSV or paste rows copied from Excel
@@ -76,12 +76,17 @@ OD-10 Hinglish default with English toggle.
 
 ## Message language
 
-Reminders and receipts can be sent in Hinglish (default) or English. The driver's default is in Settings;
-a student can override it on their form (`students.message_language`, blank = follow the default) or with a
+Reminders and receipts can be sent in Hindi (Devanagari, the default) or English. The driver's default is in Settings;
+a student can override it on their form (`students.message_language` = `hindi` | `english`, blank = follow the default) or with a
 `language` column in an import. English messages are the templates whose id ends in `_en`
 (`src/db/templatesEn.js`), editable on the Message screen. A missing English template falls back to the
-Hinglish one so a message is never empty, and phones that only have the older templates get the English set
-added on the next launch. Hindi in Devanagari is not included.
+Hindi one so a message is never empty, and phones that only have the older templates get the English set
+added on the next launch.
+
+The app screens have the same two languages (हिंदी | English, `src/state/strings.js`; a test checks both have
+the same keys). Earlier releases used Latin-script Hinglish: on the next launch `seedIfEmpty` moves such a phone
+over — untouched Hinglish templates are replaced by the Hindi ones, edited templates are kept, and the saved
+`hinglish` choices become `hindi`. `hinglish` in an import file is still accepted and means Hindi.
 
 ## Backups
 
@@ -95,5 +100,5 @@ share sheet without sending does not count as a backup.
 - Weekly launch prompt for backups (the banner and the 30-day full-screen reminder are done).
 - Biometric unlock.
 - Install-required onboarding gate (SRS 12.4), delete-permanently action, payment reversal screen.
-- Consent capture field (SEC-04), Hindi/Devanagari strings (UI is Hinglish + English).
+- Consent capture field (SEC-04). Dates on screen still use English month names (e.g. 05 Aug 2026).
 - Not yet exercised on a real phone: install, offline reload, WhatsApp hand-off, share sheet.
